@@ -6,6 +6,7 @@
   "scripts": {
     "build": "node esbuild.config.mjs production",
     "dev": "node esbuild.config.mjs",
+    "install-local": "npm run build && node scripts/install-local.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
@@ -25,4 +26,3 @@
     "vitest": "^2.1.8"
   }
 }
-

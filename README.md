@@ -23,6 +23,7 @@ npm install
 npm run typecheck
 npm test
 npm run build
+npm run install-local
 ```
 
 `npm run build` writes the Obsidian release files expected by BRAT and manual installation:
@@ -30,6 +31,8 @@ npm run build
 - `main.js`
 - `manifest.json`
 - `styles.css`
+
+`npm run install-local` rebuilds the plugin and copies those release files into `.obsidian/plugins/local-view` for testing this repository as an Obsidian vault.
 
 ## Manual Installation
 
@@ -78,4 +81,3 @@ TearingDelight/Local-view
 4. Smoke test in an Obsidian vault.
 5. Add a screenshot or short GIF after the first visual smoke test.
 6. Tag the release and upload `main.js`, `manifest.json`, and `styles.css`.
-

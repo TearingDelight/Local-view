@@ -111,6 +111,7 @@ function renderNode(
   nodeEl.className = node.isCenter ? "local-view-node is-center" : "local-view-node is-neighbor";
   nodeEl.toggleAttribute("data-local-view-selected", isSelected);
   nodeEl.dataset.localViewSlot = positionedNode.slot;
+  nodeEl.dataset.localViewNodeId = node.id;
   nodeEl.style.left = `${position.x}px`;
   nodeEl.style.top = `${position.y}px`;
   nodeEl.title = node.path;
@@ -118,7 +119,6 @@ function renderNode(
   if (!node.isCenter) {
     const buttonEl = nodeEl as HTMLButtonElement;
     buttonEl.type = "button";
-    buttonEl.dataset.localViewNodeId = node.id;
     buttonEl.setAttribute("aria-pressed", isSelected ? "true" : "false");
   }
 

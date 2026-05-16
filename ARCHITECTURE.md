@@ -144,6 +144,7 @@ Mouse input mirrors the keyboard split between Local View movement and Obsidian 
 - long-pressing suppresses the release click, so press-and-drag never opens or enters a note accidentally;
 - single-clicking a neighbor emits `enter-node` and changes only Local View's center;
 - double-clicking a neighbor emits `open-node` and opens the file in Obsidian without moving Local View's center;
+- double-clicking the center emits `open-node` and opens the current center file in Obsidian;
 - clicking the toolbar back button emits `back`.
 
 `ClickInputAdapter` delays single-click handling briefly so a double click can cancel it. It treats the second click (`event.detail > 1`) as an open action directly, with `dblclick` kept as a fallback. Do not make a neighbor's plain click open a file; opening files belongs to double click, `Enter` / `Space`, or explicit commands.

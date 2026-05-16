@@ -88,7 +88,7 @@ Keyboard movement changes Local View's center without opening or focusing the no
 ## Viewport Controls
 
 - Single-click a linked note to move Local View to that node.
-- Double-click a linked note to open the note file in Obsidian.
+- Double-click a linked note or the current center note to open the note file in Obsidian.
 - Mouse wheel changes the distance scale between nodes.
 - Drag the Local View canvas to pan around the local map.
 - Dragging or long-pressing on a note does not open it; dragging pans the canvas.

@@ -52,6 +52,10 @@ export class ClickInputAdapter implements InputAdapter {
           return;
         }
 
+        if (!nodeEl.classList.contains("is-neighbor")) {
+          return;
+        }
+
         clearPendingClick();
         pendingNodeId = nodeId;
         pendingClickTimer = window.setTimeout(() => {

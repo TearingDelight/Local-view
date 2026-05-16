@@ -3,7 +3,7 @@ import type { InputAdapter, NavigationIntentEmitter } from "./InputAdapter";
 
 type KeyboardNavigationEvent = Pick<
   KeyboardEvent,
-  "altKey" | "ctrlKey" | "isComposing" | "key" | "metaKey" | "shiftKey"
+  "altKey" | "code" | "ctrlKey" | "isComposing" | "key" | "metaKey" | "shiftKey"
 >;
 
 export class KeyboardInputAdapter implements InputAdapter {
@@ -33,22 +33,30 @@ export function getKeyboardNavigationIntent(event: KeyboardNavigationEvent): Nav
     return null;
   }
 
-  switch (event.key.toLowerCase()) {
-    case "w":
-    case "arrowup":
-      return { type: "select-direction", direction: "up" };
-    case "d":
-    case "arrowright":
-      return { type: "select-direction", direction: "right" };
-    case "s":
-    case "arrowdown":
-      return { type: "select-direction", direction: "down" };
-    case "a":
-    case "arrowleft":
-      return { type: "select-direction", direction: "left" };
+  switch (event.code) {
+    case "KeyW":
+      return { type: "enter-selected" };
+    case "KeyA":
+      return { type: "select-previous" };
+    case "KeyS":
+      return { type: "back" };
+    case "KeyD":
+      return { type: "select-next" };
+  }
+
+  switch (event.key) {
+    case "ArrowUp":
+      return { type: "enter-selected" };
+    case "ArrowLeft":
+      return { type: "select-previous" };
+    case "ArrowDown":
+      return { type: "back" };
+    case "ArrowRight":
+      return { type: "select-next" };
     case "enter":
+    case "Enter":
     case " ":
-      return { type: "open-selected" };
+      return { type: "enter-selected" };
     default:
       return null;
   }

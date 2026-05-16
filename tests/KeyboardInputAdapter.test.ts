@@ -2,34 +2,42 @@ import { describe, expect, it } from "vitest";
 import { getKeyboardNavigationIntent } from "../src/input/KeyboardInputAdapter";
 
 describe("getKeyboardNavigationIntent", () => {
-  it("maps WASD and arrow keys to selection intents", () => {
-    expect(intentFor("w")).toEqual({ type: "select-direction", direction: "up" });
-    expect(intentFor("ArrowRight")).toEqual({ type: "select-direction", direction: "right" });
-    expect(intentFor("s")).toEqual({ type: "select-direction", direction: "down" });
-    expect(intentFor("ArrowLeft")).toEqual({ type: "select-direction", direction: "left" });
+  it("maps physical WASD keys to ring selection, enter and back", () => {
+    expect(intentFor({ code: "KeyA", key: "ф" })).toEqual({ type: "select-previous" });
+    expect(intentFor({ code: "KeyD", key: "в" })).toEqual({ type: "select-next" });
+    expect(intentFor({ code: "KeyW", key: "ц" })).toEqual({ type: "enter-selected" });
+    expect(intentFor({ code: "KeyS", key: "ы" })).toEqual({ type: "back" });
   });
 
-  it("maps Enter and Space to opening the selected note", () => {
-    expect(intentFor("Enter")).toEqual({ type: "open-selected" });
-    expect(intentFor(" ")).toEqual({ type: "open-selected" });
+  it("maps arrows to the same navigation model", () => {
+    expect(intentFor({ key: "ArrowLeft" })).toEqual({ type: "select-previous" });
+    expect(intentFor({ key: "ArrowRight" })).toEqual({ type: "select-next" });
+    expect(intentFor({ key: "ArrowUp" })).toEqual({ type: "enter-selected" });
+    expect(intentFor({ key: "ArrowDown" })).toEqual({ type: "back" });
+  });
+
+  it("maps Enter and Space to entering the selected note", () => {
+    expect(intentFor({ key: "Enter" })).toEqual({ type: "enter-selected" });
+    expect(intentFor({ key: " " })).toEqual({ type: "enter-selected" });
   });
 
   it("ignores modified keys", () => {
-    expect(getKeyboardNavigationIntent({ ...baseEvent("w"), metaKey: true })).toBeNull();
-    expect(getKeyboardNavigationIntent({ ...baseEvent("ArrowDown"), shiftKey: true })).toBeNull();
+    expect(getKeyboardNavigationIntent({ ...baseEvent({ code: "KeyW", key: "ц" }), metaKey: true })).toBeNull();
+    expect(getKeyboardNavigationIntent({ ...baseEvent({ key: "ArrowDown" }), shiftKey: true })).toBeNull();
   });
 });
 
-function intentFor(key: string) {
-  return getKeyboardNavigationIntent(baseEvent(key));
+function intentFor(event: Partial<ReturnType<typeof baseEvent>>) {
+  return getKeyboardNavigationIntent(baseEvent(event));
 }
 
-function baseEvent(key: string) {
+function baseEvent(event: Partial<{ code: string; key: string }>) {
   return {
     altKey: false,
+    code: event.code ?? "",
     ctrlKey: false,
     isComposing: false,
-    key,
+    key: event.key ?? "",
     metaKey: false,
     shiftKey: false
   };

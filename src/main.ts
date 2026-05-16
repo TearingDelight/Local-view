@@ -9,7 +9,6 @@ import type { InputAdapter } from "./input/InputAdapter";
 import { KeyboardInputAdapter } from "./input/KeyboardInputAdapter";
 import { RadialLayoutEngine } from "./layout/RadialLayoutEngine";
 import { NavigationController } from "./navigation/NavigationController";
-import type { NavigationDirection } from "./navigation/NavigationIntent";
 import {
   DEFAULT_SETTINGS,
   LocalViewSettingTab,
@@ -93,42 +92,26 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
     });
 
     this.addCommand({
-      id: "select-up",
-      name: "Select note above",
+      id: "select-previous-note",
+      name: "Select previous linked note",
       callback: () => {
-        this.selectDirectionFromCommand("up");
+        this.selectPreviousFromCommand();
       }
     });
 
     this.addCommand({
-      id: "select-right",
-      name: "Select note to the right",
+      id: "select-next-note",
+      name: "Select next linked note",
       callback: () => {
-        this.selectDirectionFromCommand("right");
+        this.selectNextFromCommand();
       }
     });
 
     this.addCommand({
-      id: "select-down",
-      name: "Select note below",
+      id: "enter-selected-note",
+      name: "Enter selected note",
       callback: () => {
-        this.selectDirectionFromCommand("down");
-      }
-    });
-
-    this.addCommand({
-      id: "select-left",
-      name: "Select note to the left",
-      callback: () => {
-        this.selectDirectionFromCommand("left");
-      }
-    });
-
-    this.addCommand({
-      id: "open-selected-note",
-      name: "Open selected note",
-      callback: () => {
-        void this.openSelectedFromCommand();
+        void this.enterSelectedFromCommand();
       }
     });
 
@@ -198,6 +181,9 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
     this.app.workspace.revealLeaf(leaf);
     await this.focusActiveFile();
     this.scheduleRefreshViews();
+    if (leaf.view instanceof LocalView) {
+      leaf.view.focusForKeyboard();
+    }
   }
 
   private getExistingLocalViewLeaf(mode: LocalViewOpenMode): WorkspaceLeaf | null {
@@ -278,20 +264,28 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
     this.scheduleRefreshViews();
   }
 
-  private selectDirectionFromCommand(direction: NavigationDirection): void {
+  private selectPreviousFromCommand(): void {
     if (!this.hasFocusedLocalView()) {
       return;
     }
 
-    this.navigationController.selectDirection(direction);
+    this.navigationController.selectPrevious();
   }
 
-  private async openSelectedFromCommand(): Promise<void> {
+  private selectNextFromCommand(): void {
     if (!this.hasFocusedLocalView()) {
       return;
     }
 
-    await this.navigationController.openSelected();
+    this.navigationController.selectNext();
+  }
+
+  private async enterSelectedFromCommand(): Promise<void> {
+    if (!this.hasFocusedLocalView()) {
+      return;
+    }
+
+    await this.navigationController.enterSelected();
   }
 
   private hasFocusedLocalView(): boolean {

@@ -283,10 +283,9 @@ Input adapters emit intent objects:
 type NavigationIntent =
   | { type: "move-to"; nodeId: NodeId }
   | { type: "back" }
-  | { type: "move-left" }
-  | { type: "move-right" }
-  | { type: "move-up" }
-  | { type: "move-down" };
+  | { type: "select-previous" }
+  | { type: "select-next" }
+  | { type: "enter-selected" };
 ```
 
 Expected files:
@@ -444,37 +443,37 @@ MVP user-facing navigation:
 
 Keyboard navigation:
 
-- `A` / Left Arrow -> select nearest left candidate;
-- `D` / Right Arrow -> select nearest right candidate;
-- `W` / Up Arrow -> select nearest upper candidate;
-- `S` / Down Arrow -> select nearest lower candidate;
-- `Enter` / `Space` -> open selected candidate.
+- `A` / Left Arrow -> select previous visible link around the ring;
+- `D` / Right Arrow -> select next visible link around the ring;
+- `W` / Up Arrow -> enter selected note and rebuild around it;
+- `S` / Down Arrow -> go back through Local View history;
+- `Enter` / `Space` -> enter selected note.
 
 Important decision:
 
 ```text
-Keyboard direction first selects a neighbor.
-Opening the selected note is a separate intent.
+AD changes selection.
+WS changes position.
 ```
 
-This avoids accidental navigation while keeping WASD spatially consistent.
+This keeps the default controls close to a skill-tree UI while avoiding accidental movement on horizontal selection.
 
-### Directional Resolver
+### Ring Selection Resolver
 
-Future directional movement should be resolved by a dedicated component:
+Keyboard and future gamepad selection should be resolved by a dedicated component:
 
 ```text
 NavigationIntent
-  -> DirectionalNavigationResolver
-  -> candidate NodeId
-  -> NavigationController.moveTo(candidate)
+  -> RingSelectionResolver
+  -> selected NodeId
+  -> NavigationController.enterSelected()
 ```
 
 Resolution order for v1:
 
-1. currently focused neighbor in that direction;
-2. closest positioned node in that direction;
-3. deterministic fallback by slot order.
+1. keep selected neighbor if it remains visible;
+2. otherwise select the first visible neighbor;
+3. `previous` / `next` wraps around the visible radial order.
 
 Resolution order for future semantic mode:
 
@@ -742,7 +741,7 @@ Planned v1 features:
 
 - keyboard focus ring;
 - WASD and Arrow key input;
-- directional navigation resolver;
+- ring selection resolver;
 - incoming links behind setting;
 - hover preview;
 - better hub handling;
@@ -751,11 +750,11 @@ Planned v1 features:
 The default keyboard contract:
 
 ```text
-W / ArrowUp      -> select spatial up
-A / ArrowLeft    -> select spatial left
-S / ArrowDown    -> select spatial down
-D / ArrowRight   -> select spatial right
-Enter / Space    -> open selected
+W / ArrowUp      -> enter selected note
+A / ArrowLeft    -> select previous visible link
+S / ArrowDown    -> go back
+D / ArrowRight   -> select next visible link
+Enter / Space    -> enter selected note
 ```
 
 Obsidian commands expose the same actions so users can assign custom hotkeys.

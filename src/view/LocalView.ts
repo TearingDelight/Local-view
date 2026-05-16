@@ -80,8 +80,8 @@ export class LocalView extends ItemView {
     this.resizeObserver.observe(this.viewportEl);
 
     await this.services.focusActiveFile();
-    this.contentEl.focus({ preventScroll: true });
     await this.refresh();
+    this.focusForKeyboard();
   }
 
   async onClose(): Promise<void> {
@@ -118,7 +118,7 @@ export class LocalView extends ItemView {
 
     const currentFile = this.services.navigationController.getCurrentFile();
     if (!currentFile) {
-      this.services.navigationController.setDirectionalScene(null);
+      this.services.navigationController.setSelectionScene(null);
       renderNoCurrentFile(this.viewportEl);
       return;
     }
@@ -134,16 +134,21 @@ export class LocalView extends ItemView {
         height: this.viewportEl.clientHeight || 420
       });
 
-      this.services.navigationController.setDirectionalScene(scene);
+      this.services.navigationController.setSelectionScene(scene);
       renderLocalScene(this.viewportEl, scene, {
         selectedNodeId: this.services.navigationController.getState().selectedNodeId,
         showOverflowIndicator: settings.showOverflowIndicator
       });
     } catch (error) {
-      this.services.navigationController.setDirectionalScene(null);
+      this.services.navigationController.setSelectionScene(null);
       const message = error instanceof Error ? error.message : "Unable to render Local View";
       renderError(this.viewportEl, message);
     }
+  }
+
+  focusForKeyboard(): void {
+    this.contentEl.focus({ preventScroll: true });
+    window.requestAnimationFrame(() => this.contentEl.focus({ preventScroll: true }));
   }
 
   hasFocusWithin(): boolean {
@@ -167,11 +172,14 @@ export class LocalView extends ItemView {
       case "back":
         await this.services.navigationController.goBack();
         return;
-      case "select-direction":
-        this.services.navigationController.selectDirection(intent.direction);
+      case "select-previous":
+        this.services.navigationController.selectPrevious();
         return;
-      case "open-selected":
-        await this.services.navigationController.openSelected();
+      case "select-next":
+        this.services.navigationController.selectNext();
+        return;
+      case "enter-selected":
+        await this.services.navigationController.enterSelected();
         return;
     }
   }

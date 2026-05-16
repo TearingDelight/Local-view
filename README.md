@@ -62,11 +62,9 @@ TearingDelight/Local-view
 - `Local view: Open local view in right sidebar`
 - `Local view: Focus current note`
 - `Local view: Go back`
-- `Local view: Select note above`
-- `Local view: Select note to the right`
-- `Local view: Select note below`
-- `Local view: Select note to the left`
-- `Local view: Open selected note`
+- `Local view: Select previous linked note`
+- `Local view: Select next linked note`
+- `Local view: Enter selected note`
 
 The ribbon icon opens or focuses Local View as a normal main workspace tab. The right sidebar command is kept for compact side-panel use.
 
@@ -74,13 +72,13 @@ The ribbon icon opens or focuses Local View as a normal main workspace tab. The 
 
 When focus is inside Local View:
 
-- `W` / `ArrowUp` selects the nearest note above;
-- `D` / `ArrowRight` selects the nearest note to the right;
-- `S` / `ArrowDown` selects the nearest note below;
-- `A` / `ArrowLeft` selects the nearest note to the left;
-- `Enter` / `Space` opens the selected note.
+- `A` / `ArrowLeft` selects the previous visible link around the ring;
+- `D` / `ArrowRight` selects the next visible link around the ring;
+- `W` / `ArrowUp` enters the selected note and makes it the center;
+- `S` / `ArrowDown` goes back through Local View history;
+- `Enter` / `Space` also enters the selected note.
 
-The same actions are also available as Obsidian commands, so users can assign their own hotkeys.
+The physical `WASD` key positions are used, so the default controls keep working across keyboard layouts. The same actions are also available as Obsidian commands, so users can assign their own hotkeys.
 
 ## Settings
 

@@ -72,10 +72,11 @@ describe("NavigationController", () => {
     expect(controller.getCurrentNodeId()).toBe("Alpha.md");
   });
 
-  it("selects a directional neighbor before opening it", async () => {
+  it("auto-selects the first linked note, cycles by ring order, and enters selection", async () => {
     const alpha = makeFile("Alpha.md");
     const beta = makeFile("Beta.md");
-    const app = makeApp([alpha, beta]);
+    const gamma = makeFile("Gamma.md");
+    const app = makeApp([alpha, beta, gamma]);
     const opened: TFile[] = [];
     let controller: NavigationController;
     controller = new NavigationController({
@@ -88,8 +89,7 @@ describe("NavigationController", () => {
     });
 
     await controller.setCurrentFromWorkspace(alpha);
-    controller.setDirectionalScene(makeScene(alpha, [[beta, 100, 0]]));
-    controller.selectDirection("right");
+    controller.setSelectionScene(makeScene(alpha, [[beta, 100, 0], [gamma, 0, 100]]));
 
     expect(opened).toEqual([]);
     expect(controller.getState()).toMatchObject({
@@ -98,11 +98,20 @@ describe("NavigationController", () => {
       history: []
     });
 
-    await controller.openSelected();
+    controller.selectNext();
+    expect(controller.getState().selectedNodeId).toBe("Gamma.md");
 
-    expect(opened.map((file) => file.path)).toEqual(["Beta.md"]);
+    controller.selectNext();
+    expect(controller.getState().selectedNodeId).toBe("Beta.md");
+
+    controller.selectPrevious();
+    expect(controller.getState().selectedNodeId).toBe("Gamma.md");
+
+    await controller.enterSelected();
+
+    expect(opened.map((file) => file.path)).toEqual(["Gamma.md"]);
     expect(controller.getState()).toEqual({
-      currentNodeId: "Beta.md",
+      currentNodeId: "Gamma.md",
       selectedNodeId: null,
       history: ["Alpha.md"],
       pendingInternalOpen: null

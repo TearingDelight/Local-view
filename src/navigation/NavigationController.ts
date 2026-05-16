@@ -2,8 +2,8 @@ import type { App, TFile, WorkspaceLeaf } from "obsidian";
 import { isMarkdownFile, type NodeId } from "../graph/types";
 import type { PositionedNeighborhood } from "../layout/LayoutEngine";
 import type { LocalViewSettings } from "../settings";
-import { DirectionalNavigationResolver } from "./DirectionalNavigationResolver";
-import type { NavigationDirection, NavigationOrigin } from "./NavigationIntent";
+import { RingSelectionResolver, type RingSelectionStep } from "./RingSelectionResolver";
+import type { NavigationOrigin } from "./NavigationIntent";
 
 export interface NavigationState {
   currentNodeId: NodeId | null;
@@ -24,9 +24,9 @@ export class NavigationController {
   private readonly app: App;
   private readonly getSettings: () => LocalViewSettings;
   private readonly openFile: (file: TFile) => Promise<void>;
-  private readonly directionalResolver = new DirectionalNavigationResolver();
+  private readonly ringSelectionResolver = new RingSelectionResolver();
   private readonly listeners = new Set<NavigationChangeListener>();
-  private directionalScene: PositionedNeighborhood | null = null;
+  private selectionScene: PositionedNeighborhood | null = null;
   private state: NavigationState = {
     currentNodeId: null,
     selectedNodeId: null,
@@ -66,21 +66,16 @@ export class NavigationController {
     return this.state.history.length > 0;
   }
 
-  canOpenSelected(): boolean {
+  canEnterSelected(): boolean {
     return this.state.selectedNodeId !== null;
   }
 
-  setDirectionalScene(scene: PositionedNeighborhood | null): void {
-    this.directionalScene = scene;
-
-    if (!this.state.selectedNodeId) {
-      return;
-    }
-
-    const selectedStillVisible = scene?.neighbors.some((node) => node.node.id === this.state.selectedNodeId);
-    if (!selectedStillVisible) {
-      this.state.selectedNodeId = null;
-    }
+  setSelectionScene(scene: PositionedNeighborhood | null): void {
+    this.selectionScene = scene;
+    this.state.selectedNodeId = this.ringSelectionResolver.ensureVisibleSelection(
+      scene,
+      this.state.selectedNodeId
+    );
   }
 
   async moveTo(nodeId: NodeId): Promise<void> {
@@ -91,26 +86,15 @@ export class NavigationController {
     await this.openTarget(nodeId, true);
   }
 
-  selectDirection(direction: NavigationDirection): void {
-    if (!this.directionalScene) {
-      return;
-    }
-
-    const selectedNodeId = this.directionalResolver.resolve(
-      this.directionalScene,
-      direction,
-      this.state.selectedNodeId
-    );
-
-    if (!selectedNodeId || selectedNodeId === this.state.selectedNodeId) {
-      return;
-    }
-
-    this.state.selectedNodeId = selectedNodeId;
-    this.emit("internal");
+  selectPrevious(): void {
+    this.selectByRingStep("previous");
   }
 
-  async openSelected(): Promise<void> {
+  selectNext(): void {
+    this.selectByRingStep("next");
+  }
+
+  async enterSelected(): Promise<void> {
     if (!this.state.selectedNodeId) {
       return;
     }
@@ -128,19 +112,19 @@ export class NavigationController {
   }
 
   async moveLeft(): Promise<void> {
-    this.selectDirection("left");
+    this.selectPrevious();
   }
 
   async moveRight(): Promise<void> {
-    this.selectDirection("right");
+    this.selectNext();
   }
 
   async moveUp(): Promise<void> {
-    this.selectDirection("up");
+    await this.enterSelected();
   }
 
   async moveDown(): Promise<void> {
-    this.selectDirection("down");
+    await this.goBack();
   }
 
   async setCurrentFromWorkspace(file: TFile): Promise<void> {
@@ -239,6 +223,25 @@ export class NavigationController {
   private async openFileInWorkspace(file: TFile): Promise<void> {
     const leaf = this.getTargetLeaf();
     await leaf.openFile(file);
+  }
+
+  private selectByRingStep(step: RingSelectionStep): void {
+    if (!this.selectionScene) {
+      return;
+    }
+
+    const selectedNodeId = this.ringSelectionResolver.resolve(
+      this.selectionScene,
+      step,
+      this.state.selectedNodeId
+    );
+
+    if (!selectedNodeId || selectedNodeId === this.state.selectedNodeId) {
+      return;
+    }
+
+    this.state.selectedNodeId = selectedNodeId;
+    this.emit("internal");
   }
 
   private getTargetLeaf(): WorkspaceLeaf {

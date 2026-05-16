@@ -20,7 +20,7 @@ Implemented:
 - resolved outgoing wikilinks as neighbors;
 - deterministic radial neighbor layout;
 - click navigation;
-- keyboard neighbor selection and open-selected navigation;
+- keyboard ring selection and enter-selected navigation;
 - local back history;
 - follow-active-note support;
 - visible neighbor limit and overflow indicator.
@@ -67,7 +67,7 @@ Graph core:
 
 Navigation:
 
-- `src/navigation/DirectionalNavigationResolver.ts`
+- `src/navigation/RingSelectionResolver.ts`
 - `src/navigation/NavigationController.ts`
 - `src/navigation/NavigationIntent.ts`
 

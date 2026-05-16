@@ -16,6 +16,7 @@ Implemented:
 - ribbon icon that opens/focuses Local View as a normal main workspace tab;
 - command to open Local View as a main tab;
 - separate command to open Local View in the right sidebar;
+- file context menu action that opens/focuses Local View with that markdown file as center;
 - current markdown file as center node;
 - resolved outgoing wikilinks as neighbors;
 - deterministic neighbor layout with ring and fan modes;
@@ -118,6 +119,8 @@ activateView("sidebar")
 ```
 
 This uses `workspace.getRightLeaf(false)` when possible.
+
+Markdown file context menus include `Open local view`. It opens or focuses a normal main Local View tab and sets the clicked file as the center node without opening the markdown editor for that file.
 
 ## Keyboard Navigation
 

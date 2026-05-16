@@ -25,6 +25,7 @@ current file
 -> deterministic local layout
 -> single-click Local View movement
 -> double-click Obsidian file opening
+-> file context menu opening into Local View
 -> local history back
 -> Obsidian ItemView panel
 ```
@@ -61,6 +62,7 @@ The first implementation should support:
 - local navigation history;
 - back command;
 - active-note following with loop protection;
+- markdown file context menu action that opens the clicked file as the Local View center;
 - configurable neighbor limit;
 - graceful handling of notes with too many links.
 
@@ -367,6 +369,13 @@ User runs "Local view: Open"
   -> NeighborhoodBuilder builds local neighborhood
   -> RadialLayoutEngine computes positions
   -> Renderer paints scene
+```
+
+```text
+User right-clicks a markdown file and chooses "Open local view"
+  -> plugin opens or focuses LocalView ItemView
+  -> NavigationController sets the clicked file as current node
+  -> LocalView rebuilds around that file
 ```
 
 ### 7.2 Click Navigation

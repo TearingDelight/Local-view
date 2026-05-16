@@ -11,6 +11,7 @@ The first version intentionally stays local:
 - double-click opening of a neighbor note;
 - local back history;
 - follow-active-note support;
+- markdown file context menu entry for opening that file in Local View;
 - configurable visible neighbor limit and overflow marker.
 
 ## Non-Goals
@@ -69,6 +70,8 @@ TearingDelight/Local-view
 - `Local view: Open selected linked note`
 
 The ribbon icon opens or focuses Local View as a normal main workspace tab. The right sidebar command is kept for compact side-panel use.
+
+Right-click a markdown file in Obsidian and choose `Open local view` to open or focus Local View with that file as the center node.
 
 ## Keyboard Navigation
 

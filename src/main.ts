@@ -1,4 +1,4 @@
-import { Plugin, type TAbstractFile, type TFile, type WorkspaceLeaf } from "obsidian";
+import { Plugin, type Menu, type TAbstractFile, type TFile, type WorkspaceLeaf } from "obsidian";
 import { LOCAL_VIEW_TYPE } from "./constants";
 import { NeighborhoodBuilder } from "./graph/NeighborhoodBuilder";
 import { ObsidianLinkGraphSource } from "./graph/ObsidianLinkGraphSource";
@@ -19,6 +19,9 @@ import {
 import { LocalView } from "./view/LocalView";
 
 type LocalViewOpenMode = "tab" | "sidebar";
+interface LocalViewActivationOptions {
+  centerFile?: TFile;
+}
 
 export default class LocalViewPlugin extends Plugin implements LocalViewSettingsHost {
   settings: LocalViewSettings = DEFAULT_SETTINGS;
@@ -126,6 +129,12 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
     this.addSettingTab(new LocalViewSettingTab(this.app, this));
 
     this.registerEvent(
+      this.app.workspace.on("file-menu", (menu, file) => {
+        this.addOpenLocalViewFileMenuItem(menu, file);
+      })
+    );
+
+    this.registerEvent(
       this.app.workspace.on("file-open", (file) => {
         void this.navigationController.handleFileOpen(file);
       })
@@ -175,7 +184,10 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
     this.scheduleRefreshViews();
   }
 
-  async activateView(mode: LocalViewOpenMode = "tab"): Promise<void> {
+  async activateView(
+    mode: LocalViewOpenMode = "tab",
+    options: LocalViewActivationOptions = {}
+  ): Promise<void> {
     let leaf: WorkspaceLeaf | null = this.getExistingLocalViewLeaf(mode);
 
     if (!leaf) {
@@ -187,7 +199,11 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
     }
 
     this.app.workspace.revealLeaf(leaf);
-    await this.focusActiveFile();
+    if (options.centerFile) {
+      await this.navigationController.setCurrentFromWorkspace(options.centerFile);
+    } else {
+      await this.focusActiveFile();
+    }
     this.scheduleRefreshViews();
     if (leaf.view instanceof LocalView) {
       leaf.view.focusForKeyboard();
@@ -235,8 +251,27 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
     await this.saveData(this.settings);
   }
 
+  private addOpenLocalViewFileMenuItem(menu: Menu, file: TAbstractFile): void {
+    if (!isMarkdownFile(file)) {
+      return;
+    }
+
+    menu.addItem((item) => {
+      item
+        .setTitle("Open local view")
+        .setIcon("orbit")
+        .onClick(() => {
+          void this.activateView("tab", { centerFile: file });
+        });
+    });
+  }
+
   private async handleActiveLeafChange(): Promise<void> {
     if (!this.settings.followActiveNote) {
+      return;
+    }
+
+    if (this.app.workspace.activeLeaf?.view.getViewType() === LOCAL_VIEW_TYPE) {
       return;
     }
 

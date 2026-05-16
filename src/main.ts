@@ -141,7 +141,7 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
   }
 
   async activateView(mode: LocalViewOpenMode = "tab"): Promise<void> {
-    let leaf: WorkspaceLeaf | null = this.app.workspace.getLeavesOfType(LOCAL_VIEW_TYPE)[0] ?? null;
+    let leaf: WorkspaceLeaf | null = this.getExistingLocalViewLeaf(mode);
 
     if (!leaf) {
       leaf = this.getLocalViewLeaf(mode);
@@ -154,6 +154,24 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
     this.app.workspace.revealLeaf(leaf);
     await this.focusActiveFile();
     this.scheduleRefreshViews();
+  }
+
+  private getExistingLocalViewLeaf(mode: LocalViewOpenMode): WorkspaceLeaf | null {
+    if (mode === "tab") {
+      let rootLeaf: WorkspaceLeaf | null = null;
+      this.app.workspace.iterateRootLeaves((leaf) => {
+        if (!rootLeaf && leaf.view.getViewType() === LOCAL_VIEW_TYPE) {
+          rootLeaf = leaf;
+        }
+      });
+      return rootLeaf;
+    }
+
+    return (
+      this.app.workspace
+        .getLeavesOfType(LOCAL_VIEW_TYPE)
+        .find((leaf) => leaf.getRoot() !== this.app.workspace.rootSplit) ?? null
+    );
   }
 
   private getLocalViewLeaf(mode: LocalViewOpenMode): WorkspaceLeaf {

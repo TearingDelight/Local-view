@@ -109,7 +109,7 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
 
     this.addCommand({
       id: "enter-selected-note",
-      name: "Enter selected note",
+      name: "Move to selected linked note",
       callback: () => {
         void this.enterSelectedFromCommand();
       }

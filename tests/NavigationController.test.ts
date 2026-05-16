@@ -36,16 +36,16 @@ describe("NavigationController", () => {
     expect(controller.getState()).toEqual({
       currentNodeId: "Beta.md",
       selectedNodeId: null,
-      history: ["Alpha.md"],
+      history: [{ nodeId: "Alpha.md", selectedNodeId: "Beta.md" }],
       pendingInternalOpen: null
     });
 
     await controller.goBack();
 
-    expect(opened.map((file) => file.path)).toEqual(["Beta.md", "Alpha.md"]);
+    expect(opened.map((file) => file.path)).toEqual(["Beta.md"]);
     expect(controller.getState()).toEqual({
       currentNodeId: "Alpha.md",
-      selectedNodeId: null,
+      selectedNodeId: "Beta.md",
       history: [],
       pendingInternalOpen: null
     });
@@ -109,11 +109,21 @@ describe("NavigationController", () => {
 
     await controller.enterSelected();
 
-    expect(opened.map((file) => file.path)).toEqual(["Gamma.md"]);
+    expect(opened).toEqual([]);
     expect(controller.getState()).toEqual({
       currentNodeId: "Gamma.md",
       selectedNodeId: null,
-      history: ["Alpha.md"],
+      history: [{ nodeId: "Alpha.md", selectedNodeId: "Gamma.md" }],
+      pendingInternalOpen: null
+    });
+
+    await controller.goBack();
+
+    expect(opened).toEqual([]);
+    expect(controller.getState()).toEqual({
+      currentNodeId: "Alpha.md",
+      selectedNodeId: "Gamma.md",
+      history: [],
       pendingInternalOpen: null
     });
   });

@@ -400,8 +400,14 @@ Suggested state:
 ```ts
 interface NavigationState {
   currentNodeId: NodeId | null;
-  history: NodeId[];
+  selectedNodeId: NodeId | null;
+  history: NavigationHistoryEntry[];
   pendingInternalOpen: NodeId | null;
+}
+
+interface NavigationHistoryEntry {
+  nodeId: NodeId;
+  selectedNodeId: NodeId | null;
 }
 ```
 
@@ -445,15 +451,15 @@ Keyboard navigation:
 
 - `A` / Left Arrow -> select previous visible link around the ring;
 - `D` / Right Arrow -> select next visible link around the ring;
-- `W` / Up Arrow -> enter selected note and rebuild around it;
-- `S` / Down Arrow -> go back through Local View history;
-- `Enter` / `Space` -> enter selected note.
+- `W` / Up Arrow -> move Local View to the selected note and rebuild around it;
+- `S` / Down Arrow -> go back through Local View history and keep the previous center selected;
+- `Enter` / `Space` -> move Local View to the selected note.
 
 Important decision:
 
 ```text
 AD changes selection.
-WS changes position.
+WS changes Local View position using plugin-owned history.
 ```
 
 This keeps the default controls close to a skill-tree UI while avoiding accidental movement on horizontal selection.
@@ -750,11 +756,11 @@ Planned v1 features:
 The default keyboard contract:
 
 ```text
-W / ArrowUp      -> enter selected note
+W / ArrowUp      -> move Local View to selected note
 A / ArrowLeft    -> select previous visible link
-S / ArrowDown    -> go back
+S / ArrowDown    -> go back in Local View history
 D / ArrowRight   -> select next visible link
-Enter / Space    -> enter selected note
+Enter / Space    -> move Local View to selected note
 ```
 
 Obsidian commands expose the same actions so users can assign custom hotkeys.

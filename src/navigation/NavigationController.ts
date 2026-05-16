@@ -8,8 +8,13 @@ import type { NavigationOrigin } from "./NavigationIntent";
 export interface NavigationState {
   currentNodeId: NodeId | null;
   selectedNodeId: NodeId | null;
-  history: NodeId[];
+  history: NavigationHistoryEntry[];
   pendingInternalOpen: NodeId | null;
+}
+
+export interface NavigationHistoryEntry {
+  nodeId: NodeId;
+  selectedNodeId: NodeId | null;
 }
 
 export interface NavigationControllerOptions {
@@ -99,16 +104,19 @@ export class NavigationController {
       return;
     }
 
-    await this.moveTo(this.state.selectedNodeId);
+    this.moveToLocal(this.state.selectedNodeId);
   }
 
   async goBack(): Promise<void> {
-    const previousNodeId = this.state.history.pop();
-    if (!previousNodeId) {
+    const previousEntry = this.state.history.pop();
+    if (!previousEntry) {
       return;
     }
 
-    await this.openTarget(previousNodeId, false);
+    this.state.pendingInternalOpen = null;
+    this.state.currentNodeId = previousEntry.nodeId;
+    this.state.selectedNodeId = previousEntry.selectedNodeId;
+    this.emit("internal");
   }
 
   async moveLeft(): Promise<void> {
@@ -188,9 +196,12 @@ export class NavigationController {
       changed = true;
     }
 
-    const historyBefore = this.state.history.join("\n");
-    this.state.history = this.state.history.map((nodeId) => (nodeId === oldPath ? file.path : nodeId));
-    changed = changed || historyBefore !== this.state.history.join("\n");
+    const historyBefore = serializeHistory(this.state.history);
+    this.state.history = this.state.history.map((entry) => ({
+      nodeId: entry.nodeId === oldPath ? file.path : entry.nodeId,
+      selectedNodeId: entry.selectedNodeId === oldPath ? file.path : entry.selectedNodeId
+    }));
+    changed = changed || historyBefore !== serializeHistory(this.state.history);
 
     if (changed) {
       this.emit("external");
@@ -205,7 +216,10 @@ export class NavigationController {
 
     const previousNodeId = this.state.currentNodeId;
     if (pushCurrentToHistory && previousNodeId && previousNodeId !== targetFile.path) {
-      this.state.history.push(previousNodeId);
+      this.state.history.push({
+        nodeId: previousNodeId,
+        selectedNodeId: targetFile.path
+      });
     }
 
     this.state.selectedNodeId = null;
@@ -218,6 +232,26 @@ export class NavigationController {
       this.state.selectedNodeId = null;
       this.emit("internal");
     }
+  }
+
+  private moveToLocal(nodeId: NodeId): void {
+    const targetFile = this.app.vault.getAbstractFileByPath(nodeId);
+    if (!isMarkdownFile(targetFile) || this.state.currentNodeId === targetFile.path) {
+      return;
+    }
+
+    const previousNodeId = this.state.currentNodeId;
+    if (previousNodeId) {
+      this.state.history.push({
+        nodeId: previousNodeId,
+        selectedNodeId: targetFile.path
+      });
+    }
+
+    this.state.pendingInternalOpen = null;
+    this.state.currentNodeId = targetFile.path;
+    this.state.selectedNodeId = null;
+    this.emit("internal");
   }
 
   private async openFileInWorkspace(file: TFile): Promise<void> {
@@ -266,7 +300,7 @@ export class NavigationController {
     const previousCurrent = this.state.currentNodeId;
     const previousSelected = this.state.selectedNodeId;
     const previousPending = this.state.pendingInternalOpen;
-    const previousHistoryLength = this.state.history.length;
+    const previousHistory = serializeHistory(this.state.history);
 
     if (this.state.currentNodeId === nodeId) {
       this.state.currentNodeId = null;
@@ -280,13 +314,18 @@ export class NavigationController {
       this.state.pendingInternalOpen = null;
     }
 
-    this.state.history = this.state.history.filter((historyNodeId) => historyNodeId !== nodeId);
+    this.state.history = this.state.history
+      .filter((entry) => entry.nodeId !== nodeId)
+      .map((entry) => ({
+        nodeId: entry.nodeId,
+        selectedNodeId: entry.selectedNodeId === nodeId ? null : entry.selectedNodeId
+      }));
 
     return (
       previousCurrent !== this.state.currentNodeId ||
       previousSelected !== this.state.selectedNodeId ||
       previousPending !== this.state.pendingInternalOpen ||
-      previousHistoryLength !== this.state.history.length
+      previousHistory !== serializeHistory(this.state.history)
     );
   }
 
@@ -302,7 +341,11 @@ function copyState(state: NavigationState): NavigationState {
   return {
     currentNodeId: state.currentNodeId,
     selectedNodeId: state.selectedNodeId,
-    history: [...state.history],
+    history: state.history.map((entry) => ({ ...entry })),
     pendingInternalOpen: state.pendingInternalOpen
   };
+}
+
+function serializeHistory(history: NavigationHistoryEntry[]): string {
+  return history.map((entry) => `${entry.nodeId}\0${entry.selectedNodeId ?? ""}`).join("\n");
 }

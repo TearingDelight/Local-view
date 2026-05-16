@@ -146,7 +146,7 @@ Mouse input mirrors the keyboard split between Local View movement and Obsidian 
 - double-clicking a neighbor emits `open-node` and opens the file in Obsidian without moving Local View's center;
 - clicking the toolbar back button emits `back`.
 
-`ClickInputAdapter` delays single-click handling briefly so a double click can cancel it. Do not make a neighbor's plain click open a file; opening files belongs to double click, `Enter` / `Space`, or explicit commands.
+`ClickInputAdapter` delays single-click handling briefly so a double click can cancel it. It treats the second click (`event.detail > 1`) as an open action directly, with `dblclick` kept as a fallback. Do not make a neighbor's plain click open a file; opening files belongs to double click, `Enter` / `Space`, or explicit commands.
 
 ## Layout Modes
 
@@ -166,7 +166,7 @@ Local View has a view-only transform owned by `LocalView`:
 - `distanceScale` is passed to `RadialLayoutEngine`, so node coordinates move farther from or closer to the center;
 - `viewportOffset` is passed to `renderLocalScene`, so the rendered scene pans without changing graph state.
 
-Do not use CSS `transform: scale(...)` on the scene for zooming. Node cards must keep their rendered size; zoom changes only distances and edge lengths. The selected neighbor uses a higher z-index than other neighbors so it reads like a card pulled from a stack.
+Do not use CSS `transform: scale(...)` on the scene for zooming. Node cards must keep their rendered size; zoom changes only distances and edge lengths. The selected neighbor uses a higher z-index than other neighbors, and the hovered neighbor uses the highest z-index so it reads like a card pulled from a stack.
 
 ## Agent Notes
 

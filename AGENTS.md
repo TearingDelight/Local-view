@@ -101,6 +101,7 @@ Renderer не должен читать Obsidian metadata напрямую и н
 - `distanceScale` влияет на координаты в `RadialLayoutEngine`.
 - `viewportOffset` применяется при рендеринге для pan/drag.
 - Выбранный сосед должен иметь больший `z-index`, чтобы перекрывать остальные карточки.
+- Сосед под hover должен иметь `z-index` выше выбранного, чтобы наведение вытягивало карточку поверх стопки.
 
 ## Documentation Rules
 

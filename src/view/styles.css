@@ -149,6 +149,10 @@
   z-index: 20;
 }
 
+.local-view-node.is-neighbor:hover {
+  z-index: 30;
+}
+
 .local-view-node.is-neighbor:focus-visible {
   z-index: 21;
 }

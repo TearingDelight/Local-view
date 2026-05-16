@@ -1,11 +1,14 @@
 import type { InputAdapter, NavigationIntentEmitter } from "./InputAdapter";
 
-const SINGLE_CLICK_DELAY_MS = 220;
+const SINGLE_CLICK_DELAY_MS = 420;
+const DUPLICATE_OPEN_GUARD_MS = 100;
 
 export class ClickInputAdapter implements InputAdapter {
   mount(containerEl: HTMLElement, emit: NavigationIntentEmitter): () => void {
     let pendingClickTimer: number | null = null;
     let pendingNodeId: string | null = null;
+    let lastOpenedNodeId: string | null = null;
+    let lastOpenedAt = 0;
 
     const clearPendingClick = () => {
       if (pendingClickTimer !== null) {
@@ -13,6 +16,17 @@ export class ClickInputAdapter implements InputAdapter {
         pendingClickTimer = null;
       }
       pendingNodeId = null;
+    };
+
+    const emitOpenNode = (nodeId: string) => {
+      const now = Date.now();
+      if (lastOpenedNodeId === nodeId && now - lastOpenedAt < DUPLICATE_OPEN_GUARD_MS) {
+        return;
+      }
+
+      lastOpenedNodeId = nodeId;
+      lastOpenedAt = now;
+      emit({ type: "open-node", nodeId });
     };
 
     const handleClick = (event: MouseEvent) => {
@@ -32,6 +46,9 @@ export class ClickInputAdapter implements InputAdapter {
       const nodeId = nodeEl?.dataset.localViewNodeId;
       if (nodeId) {
         if (event.detail > 1) {
+          event.preventDefault();
+          clearPendingClick();
+          emitOpenNode(nodeId);
           return;
         }
 
@@ -60,7 +77,7 @@ export class ClickInputAdapter implements InputAdapter {
 
       event.preventDefault();
       clearPendingClick();
-      emit({ type: "open-node", nodeId });
+      emitOpenNode(nodeId);
     };
 
     containerEl.addEventListener("click", handleClick);

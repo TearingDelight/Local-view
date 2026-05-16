@@ -14,7 +14,7 @@
 current markdown file
 -> resolved outgoing wikilinks
 -> deterministic local layout
--> click/double-click local navigation
+-> click/tap and double-click/double-tap local navigation
 -> local back history
 -> Obsidian ItemView tab
 ```
@@ -92,6 +92,8 @@ Renderer не должен читать Obsidian metadata напрямую и н
 - Одиночный клик по соседу: переместить центр Local View к этому узлу, как `W`.
 - Двойной клик по соседу: открыть файл заметки в Obsidian.
 - Двойной клик по текущему центральному узлу: открыть его файл заметки в Obsidian.
+- Одиночный тап на мобильном работает как одиночный клик.
+- Двойной тап на мобильном работает как двойной клик, даже если WebView не присылает `dblclick`.
 - Drag/долгое перетаскивание по сцене или карточке: pan, без открытия заметки.
 - После возврата через `S` выделение остаётся на заметке, из которой пользователь вернулся.
 - WASD читаются через physical keyboard `event.code`, чтобы работать независимо от раскладки.
@@ -103,8 +105,10 @@ Renderer не должен читать Obsidian metadata напрямую и н
 - Масштаб Local View меняет расстояния между узлами, а не размер карточек.
 - Не используй CSS `transform: scale(...)` для всей сцены: это снова приведёт к изменению размера узлов.
 - `distanceScale` влияет на координаты в `RadialLayoutEngine`.
+- На мобильном pinch двумя пальцами меняет `distanceScale`, как desktop mouse wheel.
 - `viewportOffset` применяется при рендеринге для pan/drag.
 - Pointer capture для pan включается только после прохождения drag-threshold, иначе обычные клики по карточкам могут ретаргетиться во viewport.
+- Pinch и pan должны подавлять release click/tap, чтобы не открыть заметку после жеста.
 - Выбранный сосед должен иметь больший `z-index`, чтобы перекрывать остальные карточки.
 - Сосед под hover должен иметь `z-index` выше выбранного, чтобы наведение вытягивало карточку поверх стопки.
 

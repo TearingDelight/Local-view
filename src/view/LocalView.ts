@@ -28,9 +28,24 @@ interface PanState {
   captured: boolean;
 }
 
+interface PointerPoint {
+  pointerId: number;
+  clientX: number;
+  clientY: number;
+}
+
+interface PinchState {
+  pointerIds: [number, number];
+  startDistance: number;
+  startDistanceScale: number;
+  moved: boolean;
+}
+
 const MIN_DISTANCE_SCALE = 0.5;
 const MAX_DISTANCE_SCALE = 8;
 const PAN_START_THRESHOLD = 3;
+const PINCH_START_THRESHOLD = 4;
+const PINCH_CLICK_SUPPRESS_MS = 350;
 const LONG_PRESS_SUPPRESS_CLICK_MS = 350;
 
 export class LocalView extends ItemView {
@@ -221,6 +236,81 @@ export class LocalView extends ItemView {
   }
 
   private mountViewportInteractions(viewportEl: HTMLElement): () => void {
+    const activePointers = new Map<number, PointerPoint>();
+    let pinchState: PinchState | null = null;
+    let suppressClickResetTimer: number | null = null;
+
+    const clearSuppressClickResetTimer = () => {
+      if (suppressClickResetTimer !== null) {
+        window.clearTimeout(suppressClickResetTimer);
+        suppressClickResetTimer = null;
+      }
+    };
+
+    const suppressNextReleaseClick = (resetDelayMs: number) => {
+      this.suppressNextClick = true;
+      clearSuppressClickResetTimer();
+      suppressClickResetTimer = window.setTimeout(() => {
+        this.suppressNextClick = false;
+        suppressClickResetTimer = null;
+      }, resetDelayMs);
+    };
+
+    const pointerPointFromEvent = (event: PointerEvent): PointerPoint => ({
+      pointerId: event.pointerId,
+      clientX: event.clientX,
+      clientY: event.clientY
+    });
+
+    const trySetPointerCapture = (pointerId: number) => {
+      try {
+        if (!viewportEl.hasPointerCapture(pointerId)) {
+          viewportEl.setPointerCapture(pointerId);
+        }
+      } catch {
+        // Some mobile webviews reject capture if the pointer already ended.
+      }
+    };
+
+    const tryReleasePointerCapture = (pointerId: number) => {
+      try {
+        if (viewportEl.hasPointerCapture(pointerId)) {
+          viewportEl.releasePointerCapture(pointerId);
+        }
+      } catch {
+        // Some mobile webviews reject release if capture was already lost.
+      }
+    };
+
+    const getPinchPoints = (state: PinchState): [PointerPoint, PointerPoint] | null => {
+      const first = activePointers.get(state.pointerIds[0]);
+      const second = activePointers.get(state.pointerIds[1]);
+      return first && second ? [first, second] : null;
+    };
+
+    const startPinch = () => {
+      const [first, second] = Array.from(activePointers.values());
+      if (!first || !second) {
+        return;
+      }
+
+      const startDistance = getPointerDistance(first, second);
+      if (startDistance <= 0) {
+        return;
+      }
+
+      this.panState = null;
+      viewportEl.classList.remove("is-panning");
+      pinchState = {
+        pointerIds: [first.pointerId, second.pointerId],
+        startDistance,
+        startDistanceScale: this.distanceScale,
+        moved: false
+      };
+      trySetPointerCapture(first.pointerId);
+      trySetPointerCapture(second.pointerId);
+    };
+
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault();
       const zoomFactor = Math.exp(-event.deltaY * 0.001);
@@ -230,6 +320,18 @@ export class LocalView extends ItemView {
 
     const handlePointerDown = (event: PointerEvent) => {
       if (event.button !== 0) {
+        return;
+      }
+
+      activePointers.set(event.pointerId, pointerPointFromEvent(event));
+
+      if (activePointers.size === 2) {
+        event.preventDefault();
+        startPinch();
+        return;
+      }
+
+      if (activePointers.size > 1) {
         return;
       }
 
@@ -245,6 +347,38 @@ export class LocalView extends ItemView {
     };
 
     const handlePointerMove = (event: PointerEvent) => {
+      if (!activePointers.has(event.pointerId)) {
+        return;
+      }
+
+      activePointers.set(event.pointerId, pointerPointFromEvent(event));
+
+      if (pinchState) {
+        const pinchPoints = getPinchPoints(pinchState);
+        if (!pinchPoints) {
+          return;
+        }
+
+        event.preventDefault();
+        const currentDistance = getPointerDistance(pinchPoints[0], pinchPoints[1]);
+        if (!pinchState.moved && Math.abs(currentDistance - pinchState.startDistance) < PINCH_START_THRESHOLD) {
+          return;
+        }
+
+        pinchState.moved = true;
+        this.distanceScale = clamp(
+          pinchState.startDistanceScale * (currentDistance / pinchState.startDistance),
+          MIN_DISTANCE_SCALE,
+          MAX_DISTANCE_SCALE
+        );
+        this.scheduleRefresh();
+        return;
+      }
+
+      if (activePointers.size > 1) {
+        return;
+      }
+
       if (!this.panState || this.panState.pointerId !== event.pointerId) {
         return;
       }
@@ -258,7 +392,7 @@ export class LocalView extends ItemView {
       event.preventDefault();
       this.panState.moved = true;
       if (!this.panState.captured) {
-        viewportEl.setPointerCapture(event.pointerId);
+        trySetPointerCapture(event.pointerId);
         this.panState.captured = true;
       }
       viewportEl.classList.add("is-panning");
@@ -276,17 +410,34 @@ export class LocalView extends ItemView {
 
       const wasLongPress = Date.now() - this.panState.startTime >= LONG_PRESS_SUPPRESS_CLICK_MS;
       if (this.panState.moved || wasLongPress) {
-        this.suppressNextClick = true;
-        window.setTimeout(() => {
-          this.suppressNextClick = false;
-        }, 0);
+        suppressNextReleaseClick(0);
       }
 
-      if (this.panState.captured && viewportEl.hasPointerCapture(event.pointerId)) {
-        viewportEl.releasePointerCapture(event.pointerId);
+      if (this.panState.captured) {
+        tryReleasePointerCapture(event.pointerId);
       }
       viewportEl.classList.remove("is-panning");
       this.panState = null;
+    };
+
+    const handlePointerEnd = (event: PointerEvent) => {
+      const endingPinchState = pinchState;
+      const isPinchPointer = endingPinchState?.pointerIds.includes(event.pointerId) ?? false;
+      activePointers.delete(event.pointerId);
+
+      if (endingPinchState && (isPinchPointer || activePointers.size < 2)) {
+        suppressNextReleaseClick(PINCH_CLICK_SUPPRESS_MS);
+        for (const pointerId of endingPinchState.pointerIds) {
+          tryReleasePointerCapture(pointerId);
+        }
+        viewportEl.classList.remove("is-panning");
+        this.panState = null;
+        pinchState = null;
+        return;
+      }
+
+      endPan(event);
+      tryReleasePointerCapture(event.pointerId);
     };
 
     const handleClick = (event: MouseEvent) => {
@@ -297,28 +448,40 @@ export class LocalView extends ItemView {
       event.preventDefault();
       event.stopPropagation();
       this.suppressNextClick = false;
+      clearSuppressClickResetTimer();
     };
 
     viewportEl.addEventListener("wheel", handleWheel, { passive: false });
     viewportEl.addEventListener("pointerdown", handlePointerDown);
     viewportEl.addEventListener("pointermove", handlePointerMove);
-    viewportEl.addEventListener("pointerup", endPan);
-    viewportEl.addEventListener("pointercancel", endPan);
+    viewportEl.addEventListener("pointerup", handlePointerEnd);
+    viewportEl.addEventListener("pointercancel", handlePointerEnd);
     viewportEl.addEventListener("click", handleClick, true);
 
     return () => {
+      clearSuppressClickResetTimer();
       viewportEl.removeEventListener("wheel", handleWheel);
       viewportEl.removeEventListener("pointerdown", handlePointerDown);
       viewportEl.removeEventListener("pointermove", handlePointerMove);
-      viewportEl.removeEventListener("pointerup", endPan);
-      viewportEl.removeEventListener("pointercancel", endPan);
+      viewportEl.removeEventListener("pointerup", handlePointerEnd);
+      viewportEl.removeEventListener("pointercancel", handlePointerEnd);
       viewportEl.removeEventListener("click", handleClick, true);
+      for (const pointerId of activePointers.keys()) {
+        tryReleasePointerCapture(pointerId);
+      }
+      activePointers.clear();
+      pinchState = null;
       viewportEl.classList.remove("is-panning");
       this.panState = null;
+      this.suppressNextClick = false;
     };
   }
 }
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+function getPointerDistance(first: PointerPoint, second: PointerPoint): number {
+  return Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
 }

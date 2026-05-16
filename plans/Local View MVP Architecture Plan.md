@@ -23,8 +23,8 @@ The MVP must stay small enough to be reliable:
 current file
 -> resolved outgoing wikilinks
 -> deterministic local layout
--> single-click Local View movement
--> double-click Obsidian file opening
+-> single-click/single-tap Local View movement
+-> double-click/double-tap Obsidian file opening
 -> file context menu opening into Local View
 -> local history back
 -> Obsidian ItemView panel
@@ -57,8 +57,8 @@ The first implementation should support:
 - current note as the center node;
 - immediate outgoing resolved wikilinks as neighbors;
 - deterministic radial neighbor layout;
-- clickable neighbor nodes;
-- navigation to clicked neighbor;
+- clickable/tappable neighbor nodes;
+- navigation to clicked or tapped neighbor;
 - local navigation history;
 - back command;
 - active-note following with loop protection;
@@ -271,7 +271,7 @@ src/view/styles.css
 
 MVP:
 
-- click input only.
+- click/tap input only.
 
 Future:
 
@@ -378,16 +378,16 @@ User right-clicks a markdown file and chooses "Open local view"
   -> LocalView rebuilds around that file
 ```
 
-### 7.2 Click Navigation
+### 7.2 Click and Tap Navigation
 
 ```text
-User single-clicks neighbor
+User single-clicks or single-taps neighbor
   -> ClickInputAdapter emits { type: "enter-node", nodeId }
   -> NavigationController pushes current node to local history
   -> NavigationController changes Local View center without opening the file
   -> LocalView rebuilds around target file
 
-User double-clicks neighbor
+User double-clicks or double-taps neighbor
   -> ClickInputAdapter emits { type: "open-node", nodeId }
   -> NavigationController opens target file in Obsidian
   -> NavigationController suppresses matching file-open for Local View movement
@@ -436,8 +436,8 @@ The Local View panel should feel like a compact spatial cockpit:
 - center node is visually dominant;
 - neighbors surround it;
 - links are visible but quiet;
-- single-click means Local View movement;
-- double-click means Obsidian file opening;
+- single-click/single-tap means Local View movement;
+- double-click/double-tap means Obsidian file opening;
 - back returns to the previous position;
 - no folders, no global graph, no full vault scan.
 
@@ -463,8 +463,8 @@ The navigation model should be event-driven from the beginning.
 
 MVP user-facing navigation:
 
-- single-click neighbor -> move Local View center to neighbor;
-- double-click neighbor -> open neighbor file in Obsidian;
+- single-click/single-tap neighbor -> move Local View center to neighbor;
+- double-click/double-tap neighbor -> open neighbor file in Obsidian;
 - command -> go back.
 
 Keyboard navigation:
@@ -518,6 +518,7 @@ Rules:
 - `ring` mode places the center at the visual center and neighbors around a full circle;
 - `fan` mode places the center lower and neighbors on an upper skill-tree style arc;
 - viewport zoom changes node distances through layout coordinates, not CSS size;
+- mouse wheel and two-finger pinch both change viewport zoom through `distanceScale`;
 - viewport drag pans rendered coordinates without changing graph state;
 - selected neighbor renders above overlapping neighbors;
 - radius adapts to panel size;
@@ -671,8 +672,9 @@ Unit tests should cover:
 Manual Obsidian tests:
 
 - open Local View from a normal note;
-- single-click through 5 linked notes;
-- double-click a linked note and verify the note file opens without moving Local View center;
+- single-click or single-tap through 5 linked notes;
+- double-click or double-tap a linked note and verify the note file opens without moving Local View center;
+- pinch in and out on mobile and verify node cards keep the same visual size while distances change;
 - use back command;
 - open unrelated note manually and verify follow mode;
 - test note with no outgoing links;

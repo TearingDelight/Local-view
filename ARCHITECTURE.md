@@ -20,8 +20,8 @@ Implemented:
 - current markdown file as center node;
 - resolved outgoing wikilinks as neighbors;
 - deterministic neighbor layout with ring and fan modes;
-- single-click local node movement;
-- double-click file opening;
+- single-click or single-tap local node movement;
+- double-click or double-tap file opening;
 - keyboard ring selection and enter-selected navigation;
 - local back history;
 - follow-active-note support;
@@ -136,18 +136,18 @@ Keyboard controls are intentionally split between Local View movement and Obsidi
 
 `open-selected` suppresses the next matching Obsidian `file-open` event so `followActiveNote` does not accidentally turn a file open into a Local View movement.
 
-## Mouse Navigation
+## Pointer Navigation
 
-Mouse input mirrors the keyboard split between Local View movement and Obsidian file opening:
+Pointer input mirrors the keyboard split between Local View movement and Obsidian file opening:
 
 - dragging in the viewport pans the scene and suppresses the release click;
 - long-pressing suppresses the release click, so press-and-drag never opens or enters a note accidentally;
-- single-clicking a neighbor emits `enter-node` and changes only Local View's center;
-- double-clicking a neighbor emits `open-node` and opens the file in Obsidian without moving Local View's center;
-- double-clicking the center emits `open-node` and opens the current center file in Obsidian;
+- single-clicking or single-tapping a neighbor emits `enter-node` and changes only Local View's center;
+- double-clicking or double-tapping a neighbor emits `open-node` and opens the file in Obsidian without moving Local View's center;
+- double-clicking or double-tapping the center emits `open-node` and opens the current center file in Obsidian;
 - clicking the toolbar back button emits `back`.
 
-`ClickInputAdapter` delays single-click handling briefly so a double click can cancel it. It treats the second click (`event.detail > 1`) as an open action directly, with `dblclick` kept as a fallback. Do not make a neighbor's plain click open a file; opening files belongs to double click, `Enter` / `Space`, or explicit commands.
+`ClickInputAdapter` delays single-click handling briefly so a double click or double tap can cancel it. It treats the second desktop click (`event.detail > 1`) as an open action directly, also recognizes two close taps on the same node for mobile WebViews that do not emit `dblclick`, and keeps `dblclick` as a fallback. Do not make a neighbor's plain click or tap open a file; opening files belongs to double click, double tap, `Enter` / `Space`, or explicit commands.
 
 Viewport panning starts tracking on `pointerdown`, but pointer capture is enabled only after the drag threshold is crossed. Capturing on every press can retarget normal click/double-click events to the viewport, preventing `ClickInputAdapter` from finding the neighbor node.
 
@@ -164,8 +164,8 @@ Both modes keep the same deterministic neighbor order from `NeighborhoodBuilder`
 
 Local View has a view-only transform owned by `LocalView`:
 
-- mouse wheel changes `distanceScale`;
-- pointer drag changes `viewportOffset`;
+- mouse wheel and two-finger pinch change `distanceScale`;
+- one-pointer drag changes `viewportOffset`;
 - `distanceScale` is passed to `RadialLayoutEngine`, so node coordinates move farther from or closer to the center;
 - `viewportOffset` is passed to `renderLocalScene`, so the rendered scene pans without changing graph state.
 

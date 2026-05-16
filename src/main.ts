@@ -15,6 +15,8 @@ import {
 } from "./settings";
 import { LocalView } from "./view/LocalView";
 
+type LocalViewOpenMode = "tab" | "sidebar";
+
 export default class LocalViewPlugin extends Plugin implements LocalViewSettingsHost {
   settings: LocalViewSettings = DEFAULT_SETTINGS;
   private graphSource!: ObsidianLinkGraphSource;
@@ -50,11 +52,23 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
         })
     );
 
+    this.addRibbonIcon("orbit", "Open Local View", () => {
+      void this.activateView("tab");
+    });
+
     this.addCommand({
       id: "open-local-view",
       name: "Open local view",
       callback: () => {
-        void this.activateView();
+        void this.activateView("tab");
+      }
+    });
+
+    this.addCommand({
+      id: "open-local-view-sidebar",
+      name: "Open local view in right sidebar",
+      callback: () => {
+        void this.activateView("sidebar");
       }
     });
 
@@ -126,11 +140,11 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
     this.scheduleRefreshViews();
   }
 
-  async activateView(): Promise<void> {
+  async activateView(mode: LocalViewOpenMode = "tab"): Promise<void> {
     let leaf: WorkspaceLeaf | null = this.app.workspace.getLeavesOfType(LOCAL_VIEW_TYPE)[0] ?? null;
 
     if (!leaf) {
-      leaf = this.app.workspace.getRightLeaf(false) ?? this.app.workspace.getLeaf("tab");
+      leaf = this.getLocalViewLeaf(mode);
       await leaf.setViewState({
         type: LOCAL_VIEW_TYPE,
         active: true
@@ -140,6 +154,14 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
     this.app.workspace.revealLeaf(leaf);
     await this.focusActiveFile();
     this.scheduleRefreshViews();
+  }
+
+  private getLocalViewLeaf(mode: LocalViewOpenMode): WorkspaceLeaf {
+    if (mode === "sidebar") {
+      return this.app.workspace.getRightLeaf(false) ?? this.app.workspace.getLeaf("tab");
+    }
+
+    return this.app.workspace.getLeaf("tab");
   }
 
   async focusActiveFile(): Promise<void> {
@@ -209,4 +231,3 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
     }, 50);
   }
 }
-

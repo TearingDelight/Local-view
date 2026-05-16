@@ -53,8 +53,11 @@ TearingDelight/Local-view
 ## Commands
 
 - `Local view: Open local view`
+- `Local view: Open local view in right sidebar`
 - `Local view: Focus current note`
 - `Local view: Go back`
+
+The ribbon icon opens or focuses Local View as a normal main workspace tab. The right sidebar command is kept for compact side-panel use.
 
 ## Settings
 

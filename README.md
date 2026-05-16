@@ -34,6 +34,12 @@ npm run install-local
 
 `npm run install-local` rebuilds the plugin and copies those release files into `.obsidian/plugins/local-view` for testing this repository as an Obsidian vault.
 
+For architecture, agent workflow, and publishing notes, see:
+
+- `AGENTS.md`
+- `ARCHITECTURE.md`
+- `RELEASE.md`
+
 ## Manual Installation
 
 1. Build the plugin.

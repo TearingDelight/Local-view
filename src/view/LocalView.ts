@@ -25,6 +25,7 @@ interface PanState {
   startOffset: ViewportOffset;
   startTime: number;
   moved: boolean;
+  captured: boolean;
 }
 
 const MIN_DISTANCE_SCALE = 0.5;
@@ -238,9 +239,9 @@ export class LocalView extends ItemView {
         startClientY: event.clientY,
         startOffset: { ...this.viewportOffset },
         startTime: Date.now(),
-        moved: false
+        moved: false,
+        captured: false
       };
-      viewportEl.setPointerCapture(event.pointerId);
     };
 
     const handlePointerMove = (event: PointerEvent) => {
@@ -256,6 +257,10 @@ export class LocalView extends ItemView {
 
       event.preventDefault();
       this.panState.moved = true;
+      if (!this.panState.captured) {
+        viewportEl.setPointerCapture(event.pointerId);
+        this.panState.captured = true;
+      }
       viewportEl.classList.add("is-panning");
       this.viewportOffset = {
         x: this.panState.startOffset.x + deltaX,
@@ -277,7 +282,7 @@ export class LocalView extends ItemView {
         }, 0);
       }
 
-      if (viewportEl.hasPointerCapture(event.pointerId)) {
+      if (this.panState.captured && viewportEl.hasPointerCapture(event.pointerId)) {
         viewportEl.releasePointerCapture(event.pointerId);
       }
       viewportEl.classList.remove("is-panning");

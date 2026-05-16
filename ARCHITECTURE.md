@@ -148,6 +148,8 @@ Mouse input mirrors the keyboard split between Local View movement and Obsidian 
 
 `ClickInputAdapter` delays single-click handling briefly so a double click can cancel it. It treats the second click (`event.detail > 1`) as an open action directly, with `dblclick` kept as a fallback. Do not make a neighbor's plain click open a file; opening files belongs to double click, `Enter` / `Space`, or explicit commands.
 
+Viewport panning starts tracking on `pointerdown`, but pointer capture is enabled only after the drag threshold is crossed. Capturing on every press can retarget normal click/double-click events to the viewport, preventing `ClickInputAdapter` from finding the neighbor node.
+
 ## Layout Modes
 
 `settings.layoutMode` controls how `RadialLayoutEngine` positions the same local neighborhood:

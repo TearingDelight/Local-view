@@ -32,6 +32,7 @@ export class NavigationController {
   private readonly ringSelectionResolver = new RingSelectionResolver();
   private readonly listeners = new Set<NavigationChangeListener>();
   private selectionScene: PositionedNeighborhood | null = null;
+  private suppressedFileOpen: NodeId | null = null;
   private state: NavigationState = {
     currentNodeId: null,
     selectedNodeId: null,
@@ -107,6 +108,14 @@ export class NavigationController {
     this.moveToLocal(this.state.selectedNodeId);
   }
 
+  async openSelected(): Promise<void> {
+    if (!this.state.selectedNodeId) {
+      return;
+    }
+
+    await this.openFileWithoutMovingLocalView(this.state.selectedNodeId);
+  }
+
   async goBack(): Promise<void> {
     const previousEntry = this.state.history.pop();
     if (!previousEntry) {
@@ -148,6 +157,11 @@ export class NavigationController {
 
   async handleFileOpen(file: TFile | null): Promise<NavigationOrigin | "ignored"> {
     if (!file || !isMarkdownFile(file)) {
+      return "ignored";
+    }
+
+    if (this.suppressedFileOpen === file.path) {
+      this.suppressedFileOpen = null;
       return "ignored";
     }
 
@@ -257,6 +271,20 @@ export class NavigationController {
   private async openFileInWorkspace(file: TFile): Promise<void> {
     const leaf = this.getTargetLeaf();
     await leaf.openFile(file);
+  }
+
+  private async openFileWithoutMovingLocalView(nodeId: NodeId): Promise<void> {
+    const targetFile = this.app.vault.getAbstractFileByPath(nodeId);
+    if (!isMarkdownFile(targetFile)) {
+      return;
+    }
+
+    this.suppressedFileOpen = targetFile.path;
+    await this.openFile(targetFile);
+
+    if (this.suppressedFileOpen === targetFile.path) {
+      this.suppressedFileOpen = null;
+    }
   }
 
   private selectByRingStep(step: RingSelectionStep): void {

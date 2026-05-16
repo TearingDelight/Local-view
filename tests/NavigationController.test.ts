@@ -10,7 +10,8 @@ const DEFAULT_TEST_SETTINGS: LocalViewSettings = {
   followActiveNote: true,
   visibleNeighborLimit: 24,
   openTargetsInActiveLeaf: true,
-  showOverflowIndicator: true
+  showOverflowIndicator: true,
+  layoutMode: "ring"
 };
 
 describe("NavigationController", () => {
@@ -123,6 +124,34 @@ describe("NavigationController", () => {
     expect(controller.getState()).toEqual({
       currentNodeId: "Alpha.md",
       selectedNodeId: "Gamma.md",
+      history: [],
+      pendingInternalOpen: null
+    });
+  });
+
+  it("opens the selected note file without moving Local View center", async () => {
+    const alpha = makeFile("Alpha.md");
+    const beta = makeFile("Beta.md");
+    const app = makeApp([alpha, beta]);
+    const opened: TFile[] = [];
+    let controller: NavigationController;
+    controller = new NavigationController({
+      app,
+      getSettings: () => DEFAULT_TEST_SETTINGS,
+      openFile: async (file) => {
+        opened.push(file);
+        await controller.handleFileOpen(file);
+      }
+    });
+
+    await controller.setCurrentFromWorkspace(alpha);
+    controller.setSelectionScene(makeScene(alpha, [[beta, 100, 0]]));
+    await controller.openSelected();
+
+    expect(opened.map((file) => file.path)).toEqual(["Beta.md"]);
+    expect(controller.getState()).toEqual({
+      currentNodeId: "Alpha.md",
+      selectedNodeId: "Beta.md",
       history: [],
       pendingInternalOpen: null
     });

@@ -132,6 +132,8 @@ export class LocalView extends ItemView {
       const scene = this.services.layoutEngine.layout(neighborhood, {
         width: this.viewportEl.clientWidth || 640,
         height: this.viewportEl.clientHeight || 420
+      }, {
+        mode: settings.layoutMode
       });
 
       this.services.navigationController.setSelectionScene(scene);
@@ -180,6 +182,9 @@ export class LocalView extends ItemView {
         return;
       case "enter-selected":
         await this.services.navigationController.enterSelected();
+        return;
+      case "open-selected":
+        await this.services.navigationController.openSelected();
         return;
     }
   }

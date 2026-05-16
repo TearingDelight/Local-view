@@ -13,7 +13,7 @@
 ```text
 current markdown file
 -> resolved outgoing wikilinks
--> deterministic radial layout
+-> deterministic local layout
 -> click navigation
 -> local back history
 -> Obsidian ItemView tab
@@ -74,10 +74,31 @@ git push git@github.com:TearingDelight/Local-view.git main
 - `NavigationController` decides movement.
 - `ObsidianLinkGraphSource` extracts outgoing links from Obsidian metadata cache.
 - `NeighborhoodBuilder` sorts, limits and reports overflow.
-- `RadialLayoutEngine` positions nodes deterministically.
+- `RadialLayoutEngine` positions nodes deterministically in `ring` or `fan` mode.
 - Renderer renders state and forwards click intents only.
 
 Renderer не должен читать Obsidian metadata напрямую и не должен открывать файлы.
+
+## Local View Navigation Contract
+
+- `A` / `ArrowLeft`: выбрать предыдущую видимую связь.
+- `D` / `ArrowRight`: выбрать следующую видимую связь.
+- `W` / `ArrowUp`: переместить центр Local View к выбранной связи, не открывая файл Obsidian.
+- `S` / `ArrowDown`: вернуться по внутренней истории Local View.
+- `Enter` / `Space`: открыть выбранную заметку в Obsidian, не меняя центр Local View.
+- После возврата через `S` выделение остаётся на заметке, из которой пользователь вернулся.
+- WASD читаются через physical keyboard `event.code`, чтобы работать независимо от раскладки.
+
+История клавиатурного перемещения принадлежит плагину, а не Obsidian. Не завязывай `W/S` на историю или фокус Obsidian workspace.
+
+## Documentation Rules
+
+После изменения поведения, архитектуры, настроек или пользовательского контракта обновляй:
+
+- `AGENTS.md`, если это правило для будущих AI agents;
+- `ARCHITECTURE.md`, если это уже реализованное устройство системы;
+- `plans/Local View MVP Architecture Plan.md`, если меняется продуктовая/архитектурная договорённость;
+- `README.md`, если это пользовательское поведение, настройка или команда.
 
 ## Verification
 
@@ -94,4 +115,3 @@ npm run install-local
 ```bash
 node -e "for (const f of ['manifest.json','versions.json']) JSON.parse(require('fs').readFileSync(f,'utf8'))"
 ```
-

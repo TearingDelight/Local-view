@@ -5,6 +5,7 @@ export type NavigationIntent =
   | { type: "back" }
   | { type: "select-previous" }
   | { type: "select-next" }
-  | { type: "enter-selected" };
+  | { type: "enter-selected" }
+  | { type: "open-selected" };
 
 export type NavigationOrigin = "internal" | "external";

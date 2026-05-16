@@ -5,18 +5,22 @@ import {
   MIN_VISIBLE_NEIGHBOR_LIMIT
 } from "./constants";
 
+export type LocalViewLayoutMode = "ring" | "fan";
+
 export interface LocalViewSettings {
   followActiveNote: boolean;
   visibleNeighborLimit: number;
   openTargetsInActiveLeaf: boolean;
   showOverflowIndicator: boolean;
+  layoutMode: LocalViewLayoutMode;
 }
 
 export const DEFAULT_SETTINGS: LocalViewSettings = {
   followActiveNote: true,
   visibleNeighborLimit: DEFAULT_VISIBLE_NEIGHBOR_LIMIT,
   openTargetsInActiveLeaf: true,
-  showOverflowIndicator: true
+  showOverflowIndicator: true,
+  layoutMode: "ring"
 };
 
 export type LocalViewSettingsHost = Plugin & {
@@ -28,6 +32,7 @@ export function normalizeSettings(settings: Partial<LocalViewSettings>): LocalVi
   return {
     ...DEFAULT_SETTINGS,
     ...settings,
+    layoutMode: normalizeLayoutMode(settings.layoutMode),
     visibleNeighborLimit: normalizeNeighborLimit(settings.visibleNeighborLimit)
   };
 }
@@ -39,6 +44,10 @@ export function normalizeNeighborLimit(value: unknown): number {
   }
 
   return Math.min(MAX_VISIBLE_NEIGHBOR_LIMIT, Math.max(MIN_VISIBLE_NEIGHBOR_LIMIT, Math.floor(parsed)));
+}
+
+export function normalizeLayoutMode(value: unknown): LocalViewLayoutMode {
+  return value === "fan" ? "fan" : "ring";
 }
 
 export class LocalViewSettingTab extends PluginSettingTab {
@@ -72,6 +81,17 @@ export class LocalViewSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
+      .setName("Layout mode")
+      .setDesc("Choose ring for a full radial circle or fan for an upper skill-tree style arc.")
+      .addDropdown((dropdown) => {
+        dropdown
+          .addOption("ring", "Ring")
+          .addOption("fan", "Fan")
+          .setValue(this.host.settings.layoutMode)
+          .onChange((value) => this.host.updateSettings({ layoutMode: normalizeLayoutMode(value) }));
+      });
+
+    new Setting(containerEl)
       .setName("Open targets in active leaf")
       .setDesc("Use the active markdown leaf when possible; otherwise open a new tab.")
       .addToggle((toggle) => {
@@ -88,4 +108,3 @@ export class LocalViewSettingTab extends PluginSettingTab {
       });
   }
 }
-

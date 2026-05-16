@@ -115,6 +115,14 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
       }
     });
 
+    this.addCommand({
+      id: "open-selected-note",
+      name: "Open selected linked note",
+      callback: () => {
+        void this.openSelectedFromCommand();
+      }
+    });
+
     this.addSettingTab(new LocalViewSettingTab(this.app, this));
 
     this.registerEvent(
@@ -286,6 +294,14 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
     }
 
     await this.navigationController.enterSelected();
+  }
+
+  private async openSelectedFromCommand(): Promise<void> {
+    if (!this.hasFocusedLocalView()) {
+      return;
+    }
+
+    await this.navigationController.openSelected();
   }
 
   private hasFocusedLocalView(): boolean {

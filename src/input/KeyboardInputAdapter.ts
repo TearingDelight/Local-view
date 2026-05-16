@@ -56,7 +56,7 @@ export function getKeyboardNavigationIntent(event: KeyboardNavigationEvent): Nav
     case "enter":
     case "Enter":
     case " ":
-      return { type: "enter-selected" };
+      return { type: "open-selected" };
     default:
       return null;
   }

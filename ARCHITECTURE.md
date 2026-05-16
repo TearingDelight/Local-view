@@ -18,7 +18,7 @@ Implemented:
 - separate command to open Local View in the right sidebar;
 - current markdown file as center node;
 - resolved outgoing wikilinks as neighbors;
-- deterministic radial neighbor layout;
+- deterministic neighbor layout with ring and fan modes;
 - click navigation;
 - keyboard ring selection and enter-selected navigation;
 - local back history;
@@ -43,7 +43,7 @@ Obsidian workspace events
   -> NavigationController
   -> NeighborhoodBuilder
   -> ObsidianLinkGraphSource
-  -> RadialLayoutEngine
+  -> RadialLayoutEngine (ring or fan mode)
   -> LocalView / renderLocalScene
   -> ClickInputAdapter
   -> NavigationController
@@ -117,6 +117,39 @@ activateView("sidebar")
 ```
 
 This uses `workspace.getRightLeaf(false)` when possible.
+
+## Keyboard Navigation
+
+Keyboard controls are intentionally split between Local View movement and Obsidian file opening:
+
+- `A` / `ArrowLeft` emits `select-previous` and cycles the selected visible neighbor backward.
+- `D` / `ArrowRight` emits `select-next` and cycles the selected visible neighbor forward.
+- `W` / `ArrowUp` emits `enter-selected` and changes only Local View's center node.
+- `S` / `ArrowDown` emits `back` and returns through Local View's own history.
+- `Enter` / `Space` emits `open-selected` and opens the selected file in Obsidian without changing Local View's center.
+
+`NavigationController` owns this behavior. Its history entries store both the previous center node and the neighbor that should remain selected after returning. This is what keeps `S` continuous: after entering `Gamma` from `Alpha`, going back to `Alpha` keeps `Gamma` selected.
+
+`open-selected` suppresses the next matching Obsidian `file-open` event so `followActiveNote` does not accidentally turn a file open into a Local View movement.
+
+## Layout Modes
+
+`settings.layoutMode` controls how `RadialLayoutEngine` positions the same local neighborhood:
+
+- `ring`: the original full radial circle around the center.
+- `fan`: an upper arc, closer to a skill-tree fan, with the center lower in the viewport.
+
+Both modes keep the same deterministic neighbor order from `NeighborhoodBuilder`. Selection order follows the visible neighbor order, not geometry.
+
+## Agent Notes
+
+When changing Local View behavior, update all three documentation layers when relevant:
+
+- `AGENTS.md` for rules future AI agents must follow.
+- `ARCHITECTURE.md` for implemented system behavior and module contracts.
+- `plans/Local View MVP Architecture Plan.md` for product/architecture intent and future direction.
+
+Keep renderer responsibilities narrow: render state and emit intents only. Navigation semantics belong in `NavigationController`; selection order belongs in `RingSelectionResolver`; node positions belong in `RadialLayoutEngine`.
 
 ## Release Files
 

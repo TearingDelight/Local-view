@@ -453,13 +453,14 @@ Keyboard navigation:
 - `D` / Right Arrow -> select next visible link around the ring;
 - `W` / Up Arrow -> move Local View to the selected note and rebuild around it;
 - `S` / Down Arrow -> go back through Local View history and keep the previous center selected;
-- `Enter` / `Space` -> move Local View to the selected note.
+- `Enter` / `Space` -> open the selected note in Obsidian without moving Local View's center.
 
 Important decision:
 
 ```text
 AD changes selection.
 WS changes Local View position using plugin-owned history.
+Enter/Space opens the file editor without changing Local View position.
 ```
 
 This keeps the default controls close to a skill-tree UI while avoiding accidental movement on horizontal selection.
@@ -472,28 +473,30 @@ Keyboard and future gamepad selection should be resolved by a dedicated componen
 NavigationIntent
   -> RingSelectionResolver
   -> selected NodeId
-  -> NavigationController.enterSelected()
+  -> NavigationController.enterSelected() for W / ArrowUp
+  -> NavigationController.openSelected() for Enter / Space
 ```
 
 Resolution order for v1:
 
 1. keep selected neighbor if it remains visible;
 2. otherwise select the first visible neighbor;
-3. `previous` / `next` wraps around the visible radial order.
+3. `previous` / `next` wraps around the visible neighbor order.
 
-Resolution order for future semantic mode:
+Open-selected rule:
 
-1. explicit relation provider candidate;
-2. spatial candidate;
-3. deterministic fallback.
+1. resolve the selected visible neighbor;
+2. open the target file through Obsidian workspace;
+3. suppress the matching `file-open` event so `followActiveNote` does not move Local View.
 
 ## 10. UI Layout Strategy
 
-MVP layout: deterministic radial layout.
+MVP layout: deterministic local layout.
 
 Rules:
 
-- center at the visual center of the panel;
+- `ring` mode places the center at the visual center and neighbors around a full circle;
+- `fan` mode places the center lower and neighbors on an upper skill-tree style arc;
 - radius adapts to panel size;
 - nodes have stable dimensions;
 - labels are truncated, not allowed to resize the layout;
@@ -760,7 +763,7 @@ W / ArrowUp      -> move Local View to selected note
 A / ArrowLeft    -> select previous visible link
 S / ArrowDown    -> go back in Local View history
 D / ArrowRight   -> select next visible link
-Enter / Space    -> move Local View to selected note
+Enter / Space    -> open selected note in Obsidian
 ```
 
 Obsidian commands expose the same actions so users can assign custom hotkeys.

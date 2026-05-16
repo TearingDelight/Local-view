@@ -16,9 +16,9 @@ describe("getKeyboardNavigationIntent", () => {
     expect(intentFor({ key: "ArrowDown" })).toEqual({ type: "back" });
   });
 
-  it("maps Enter and Space to entering the selected note", () => {
-    expect(intentFor({ key: "Enter" })).toEqual({ type: "enter-selected" });
-    expect(intentFor({ key: " " })).toEqual({ type: "enter-selected" });
+  it("maps Enter and Space to opening the selected note file", () => {
+    expect(intentFor({ key: "Enter" })).toEqual({ type: "open-selected" });
+    expect(intentFor({ key: " " })).toEqual({ type: "open-selected" });
   });
 
   it("ignores modified keys", () => {

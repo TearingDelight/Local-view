@@ -33,5 +33,32 @@ describe("RadialLayoutEngine", () => {
     expect(first.overflowIndicator).toEqual(second.overflowIndicator);
     expect(first.neighbors.map((node) => node.slot)).toEqual(["up", "right", "down", "left"]);
   });
-});
 
+  it("can arrange neighbors as an upper fan", () => {
+    const center = createLocalNode(makeFile("Center.md"), true);
+    const neighbors = ["A.md", "B.md", "C.md"].map((path) => ({
+      node: createLocalNode(makeFile(path), false),
+      relationToCenter: "outgoing" as const,
+      weight: 1
+    }));
+    const neighborhood: LocalNeighborhood = {
+      center,
+      neighbors,
+      edges: neighbors.map((neighbor) => ({
+        source: center.id,
+        target: neighbor.node.id,
+        direction: "outgoing",
+        kind: "wikilink"
+      })),
+      overflowCount: 0,
+      generatedAt: 1
+    };
+    const engine = new RadialLayoutEngine();
+
+    const fan = engine.layout(neighborhood, { width: 800, height: 600 }, { mode: "fan" });
+
+    expect(fan.center.y).toBeGreaterThan(300);
+    expect(fan.neighbors.every((node) => node.y < fan.center.y)).toBe(true);
+    expect(fan.neighbors.map((node) => node.slot)).toEqual(["upper-left", "up", "upper-right"]);
+  });
+});

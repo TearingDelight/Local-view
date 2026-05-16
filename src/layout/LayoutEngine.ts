@@ -1,4 +1,5 @@
 import type { LocalEdge, LocalNeighborhood, LocalNode } from "../graph/types";
+import type { LocalViewLayoutMode } from "../settings";
 
 export type DirectionalSlot =
   | "center"
@@ -14,6 +15,10 @@ export type DirectionalSlot =
 export interface LayoutBounds {
   width: number;
   height: number;
+}
+
+export interface LayoutOptions {
+  mode: LocalViewLayoutMode;
 }
 
 export interface PositionedNode {
@@ -39,6 +44,5 @@ export interface PositionedNeighborhood {
 }
 
 export interface LayoutEngine {
-  layout(neighborhood: LocalNeighborhood, bounds: LayoutBounds): PositionedNeighborhood;
+  layout(neighborhood: LocalNeighborhood, bounds: LayoutBounds, options?: Partial<LayoutOptions>): PositionedNeighborhood;
 }
-

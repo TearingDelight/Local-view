@@ -1,0 +1,11 @@
+{
+  "id": "local-view",
+  "name": "Local View",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "A compact spatial navigation panel for the current note and its resolved outgoing wikilinks.",
+  "author": "TearingDelight",
+  "authorUrl": "https://github.com/TearingDelight",
+  "isDesktopOnly": false
+}
+

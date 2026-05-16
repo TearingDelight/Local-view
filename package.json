@@ -1,0 +1,28 @@
+{
+  "name": "obsidian-local-view",
+  "version": "0.1.0",
+  "description": "Local spatial navigation for Obsidian notes.",
+  "main": "main.js",
+  "scripts": {
+    "build": "node esbuild.config.mjs production",
+    "dev": "node esbuild.config.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "obsidian",
+    "obsidian-plugin",
+    "navigation",
+    "graph"
+  ],
+  "author": "TearingDelight",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "esbuild": "^0.24.2",
+    "obsidian": "^1.8.7",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
+

@@ -14,6 +14,8 @@ const OVERFLOW_ANGLE = Math.PI / 4;
 const FAN_START_ANGLE = (-150 * Math.PI) / 180;
 const FAN_END_ANGLE = (-30 * Math.PI) / 180;
 const FAN_OVERFLOW_ANGLE = (-10 * Math.PI) / 180;
+const MIN_DISTANCE_SCALE = 0.5;
+const MAX_DISTANCE_SCALE = 8;
 
 export class RadialLayoutEngine implements LayoutEngine {
   layout(
@@ -26,7 +28,8 @@ export class RadialLayoutEngine implements LayoutEngine {
     const centerX = width / 2;
     const mode = options.mode ?? "ring";
     const centerY = mode === "fan" ? height * 0.68 : height / 2;
-    const radius = Math.max(MIN_RADIUS, Math.min(width, height) / 2 - NODE_SAFE_MARGIN);
+    const distanceScale = clampDistanceScale(options.distanceScale ?? 1);
+    const radius = Math.max(MIN_RADIUS, Math.min(width, height) / 2 - NODE_SAFE_MARGIN) * distanceScale;
     const center: PositionedNode = {
       node: neighborhood.center,
       x: centerX,
@@ -108,4 +111,12 @@ function angleToSlot(angle: number): DirectionalSlot {
 
 function normalizeDegrees(degrees: number): number {
   return ((degrees % 360) + 360) % 360;
+}
+
+function clampDistanceScale(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 1;
+  }
+
+  return Math.min(MAX_DISTANCE_SCALE, Math.max(MIN_DISTANCE_SCALE, value));
 }

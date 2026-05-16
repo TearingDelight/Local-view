@@ -19,6 +19,7 @@ export interface LayoutBounds {
 
 export interface LayoutOptions {
   mode: LocalViewLayoutMode;
+  distanceScale: number;
 }
 
 export interface PositionedNode {

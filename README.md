@@ -81,6 +81,13 @@ When focus is inside Local View:
 
 Keyboard movement changes Local View's center without opening or focusing the note editor. The physical `WASD` key positions are used, so the default controls keep working across keyboard layouts. The same actions are also available as Obsidian commands, so users can assign their own hotkeys.
 
+## Viewport Controls
+
+- Mouse wheel changes the distance scale between nodes.
+- Drag the Local View canvas to pan around the local map.
+- Node cards keep the same visual size while zooming; only distances and edge lengths change.
+- The selected linked note is drawn above overlapping notes.
+
 ## Settings
 
 - `followActiveNote`

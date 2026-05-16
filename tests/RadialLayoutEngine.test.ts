@@ -61,4 +61,33 @@ describe("RadialLayoutEngine", () => {
     expect(fan.neighbors.every((node) => node.y < fan.center.y)).toBe(true);
     expect(fan.neighbors.map((node) => node.slot)).toEqual(["upper-left", "up", "upper-right"]);
   });
+
+  it("scales neighbor distance without changing layout bounds", () => {
+    const center = createLocalNode(makeFile("Center.md"), true);
+    const neighbors = ["A.md"].map((path) => ({
+      node: createLocalNode(makeFile(path), false),
+      relationToCenter: "outgoing" as const,
+      weight: 1
+    }));
+    const neighborhood: LocalNeighborhood = {
+      center,
+      neighbors,
+      edges: neighbors.map((neighbor) => ({
+        source: center.id,
+        target: neighbor.node.id,
+        direction: "outgoing",
+        kind: "wikilink"
+      })),
+      overflowCount: 0,
+      generatedAt: 1
+    };
+    const engine = new RadialLayoutEngine();
+
+    const normal = engine.layout(neighborhood, { width: 800, height: 600 }, { distanceScale: 1 });
+    const expanded = engine.layout(neighborhood, { width: 800, height: 600 }, { distanceScale: 2 });
+
+    expect(expanded.bounds).toEqual(normal.bounds);
+    expect(expanded.radius).toBe(normal.radius * 2);
+    expect(expanded.center).toEqual(normal.center);
+  });
 });

@@ -4,6 +4,12 @@ import type { NodeId } from "../graph/types";
 export interface RenderLocalSceneOptions {
   selectedNodeId: NodeId | null;
   showOverflowIndicator: boolean;
+  viewportOffset: ViewportOffset;
+}
+
+export interface ViewportOffset {
+  x: number;
+  y: number;
 }
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
@@ -24,14 +30,14 @@ export function renderLocalScene(
   edgeLayer.classList.add("local-view-edge-layer");
   edgeLayer.setAttribute("viewBox", `0 0 ${scene.bounds.width} ${scene.bounds.height}`);
   edgeLayer.setAttribute("aria-hidden", "true");
-  renderEdges(edgeLayer, scene);
+  renderEdges(edgeLayer, scene, options.viewportOffset);
 
   const nodeLayer = document.createElement("div");
   nodeLayer.className = "local-view-node-layer";
-  nodeLayer.appendChild(renderNode(scene.center, options.selectedNodeId));
+  nodeLayer.appendChild(renderNode(scene.center, options.selectedNodeId, options.viewportOffset));
 
   for (const positionedNode of scene.neighbors) {
-    nodeLayer.appendChild(renderNode(positionedNode, options.selectedNodeId));
+    nodeLayer.appendChild(renderNode(positionedNode, options.selectedNodeId, options.viewportOffset));
   }
 
   if (scene.neighbors.length === 0) {
@@ -42,7 +48,7 @@ export function renderLocalScene(
   }
 
   if (options.showOverflowIndicator && scene.overflowIndicator) {
-    nodeLayer.appendChild(renderOverflowIndicator(scene.overflowIndicator));
+    nodeLayer.appendChild(renderOverflowIndicator(scene.overflowIndicator, options.viewportOffset));
   }
 
   sceneEl.appendChild(edgeLayer);
@@ -68,7 +74,7 @@ export function renderError(containerEl: HTMLElement, message: string): void {
   containerEl.appendChild(errorEl);
 }
 
-function renderEdges(edgeLayer: SVGSVGElement, scene: PositionedNeighborhood): void {
+function renderEdges(edgeLayer: SVGSVGElement, scene: PositionedNeighborhood, offset: ViewportOffset): void {
   const positionsById = new Map(scene.neighbors.map((node) => [node.node.id, node]));
   positionsById.set(scene.center.node.id, scene.center);
 
@@ -83,23 +89,30 @@ function renderEdges(edgeLayer: SVGSVGElement, scene: PositionedNeighborhood): v
     line.classList.add("local-view-edge");
     line.dataset.source = edge.source;
     line.dataset.target = edge.target;
-    line.setAttribute("x1", source.x.toString());
-    line.setAttribute("y1", source.y.toString());
-    line.setAttribute("x2", target.x.toString());
-    line.setAttribute("y2", target.y.toString());
+    const sourcePosition = offsetPosition(source, offset);
+    const targetPosition = offsetPosition(target, offset);
+    line.setAttribute("x1", sourcePosition.x.toString());
+    line.setAttribute("y1", sourcePosition.y.toString());
+    line.setAttribute("x2", targetPosition.x.toString());
+    line.setAttribute("y2", targetPosition.y.toString());
     edgeLayer.appendChild(line);
   }
 }
 
-function renderNode(positionedNode: PositionedNode, selectedNodeId: NodeId | null): HTMLElement {
+function renderNode(
+  positionedNode: PositionedNode,
+  selectedNodeId: NodeId | null,
+  offset: ViewportOffset
+): HTMLElement {
   const node = positionedNode.node;
   const isSelected = !node.isCenter && node.id === selectedNodeId;
+  const position = offsetPosition(positionedNode, offset);
   const nodeEl = document.createElement(node.isCenter ? "div" : "button");
   nodeEl.className = node.isCenter ? "local-view-node is-center" : "local-view-node is-neighbor";
   nodeEl.toggleAttribute("data-local-view-selected", isSelected);
   nodeEl.dataset.localViewSlot = positionedNode.slot;
-  nodeEl.style.left = `${positionedNode.x}px`;
-  nodeEl.style.top = `${positionedNode.y}px`;
+  nodeEl.style.left = `${position.x}px`;
+  nodeEl.style.top = `${position.y}px`;
   nodeEl.title = node.path;
 
   if (!node.isCenter) {
@@ -117,12 +130,23 @@ function renderNode(positionedNode: PositionedNode, selectedNodeId: NodeId | nul
   return nodeEl;
 }
 
-function renderOverflowIndicator(indicator: { count: number; x: number; y: number }): HTMLElement {
+function renderOverflowIndicator(
+  indicator: { count: number; x: number; y: number },
+  offset: ViewportOffset
+): HTMLElement {
+  const position = offsetPosition(indicator, offset);
   const overflowEl = document.createElement("div");
   overflowEl.className = "local-view-overflow";
-  overflowEl.style.left = `${indicator.x}px`;
-  overflowEl.style.top = `${indicator.y}px`;
+  overflowEl.style.left = `${position.x}px`;
+  overflowEl.style.top = `${position.y}px`;
   overflowEl.textContent = `+${indicator.count}`;
   overflowEl.title = `${indicator.count} more outgoing links`;
   return overflowEl;
+}
+
+function offsetPosition(position: { x: number; y: number }, offset: ViewportOffset): { x: number; y: number } {
+  return {
+    x: position.x + offset.x,
+    y: position.y + offset.y
+  };
 }

@@ -141,6 +141,17 @@ Keyboard controls are intentionally split between Local View movement and Obsidi
 
 Both modes keep the same deterministic neighbor order from `NeighborhoodBuilder`. Selection order follows the visible neighbor order, not geometry.
 
+## Viewport Transform
+
+Local View has a view-only transform owned by `LocalView`:
+
+- mouse wheel changes `distanceScale`;
+- pointer drag changes `viewportOffset`;
+- `distanceScale` is passed to `RadialLayoutEngine`, so node coordinates move farther from or closer to the center;
+- `viewportOffset` is passed to `renderLocalScene`, so the rendered scene pans without changing graph state.
+
+Do not use CSS `transform: scale(...)` on the scene for zooming. Node cards must keep their rendered size; zoom changes only distances and edge lengths. The selected neighbor uses a higher z-index than other neighbors so it reads like a card pulled from a stack.
+
 ## Agent Notes
 
 When changing Local View behavior, update all three documentation layers when relevant:

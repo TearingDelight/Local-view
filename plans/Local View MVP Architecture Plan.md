@@ -497,6 +497,9 @@ Rules:
 
 - `ring` mode places the center at the visual center and neighbors around a full circle;
 - `fan` mode places the center lower and neighbors on an upper skill-tree style arc;
+- viewport zoom changes node distances through layout coordinates, not CSS size;
+- viewport drag pans rendered coordinates without changing graph state;
+- selected neighbor renders above overlapping neighbors;
 - radius adapts to panel size;
 - nodes have stable dimensions;
 - labels are truncated, not allowed to resize the layout;

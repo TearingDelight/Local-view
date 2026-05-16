@@ -6,7 +6,7 @@ import type { LayoutEngine } from "../layout/LayoutEngine";
 import type { NavigationController } from "../navigation/NavigationController";
 import type { NavigationIntent } from "../navigation/NavigationIntent";
 import type { LocalViewSettings } from "../settings";
-import { renderError, renderLocalScene, renderNoCurrentFile } from "./renderLocalScene";
+import { renderError, renderLocalScene, renderNoCurrentFile, type ViewportOffset } from "./renderLocalScene";
 
 export interface LocalViewServices {
   app: App;
@@ -18,13 +18,30 @@ export interface LocalViewServices {
   focusActiveFile: () => Promise<void>;
 }
 
+interface PanState {
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startOffset: ViewportOffset;
+  moved: boolean;
+}
+
+const MIN_DISTANCE_SCALE = 0.5;
+const MAX_DISTANCE_SCALE = 8;
+const PAN_START_THRESHOLD = 3;
+
 export class LocalView extends ItemView {
   private viewportEl: HTMLElement | null = null;
   private backButtonEl: HTMLButtonElement | null = null;
   private inputUnmount: (() => void) | null = null;
   private navigationUnmount: (() => void) | null = null;
+  private viewportInteractionUnmount: (() => void) | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private refreshTimer: number | null = null;
+  private distanceScale = 1;
+  private viewportOffset: ViewportOffset = { x: 0, y: 0 };
+  private panState: PanState | null = null;
+  private suppressNextClick = false;
 
   constructor(leaf: WorkspaceLeaf, private readonly services: LocalViewServices) {
     super(leaf);
@@ -67,6 +84,7 @@ export class LocalView extends ItemView {
 
     this.viewportEl = document.createElement("div");
     this.viewportEl.className = "local-view-viewport";
+    this.viewportInteractionUnmount = this.mountViewportInteractions(this.viewportEl);
 
     this.contentEl.appendChild(toolbarEl);
     this.contentEl.appendChild(this.viewportEl);
@@ -94,6 +112,8 @@ export class LocalView extends ItemView {
     this.resizeObserver = null;
     this.inputUnmount?.();
     this.inputUnmount = null;
+    this.viewportInteractionUnmount?.();
+    this.viewportInteractionUnmount = null;
     this.navigationUnmount?.();
     this.navigationUnmount = null;
   }
@@ -133,13 +153,15 @@ export class LocalView extends ItemView {
         width: this.viewportEl.clientWidth || 640,
         height: this.viewportEl.clientHeight || 420
       }, {
+        distanceScale: this.distanceScale,
         mode: settings.layoutMode
       });
 
       this.services.navigationController.setSelectionScene(scene);
       renderLocalScene(this.viewportEl, scene, {
         selectedNodeId: this.services.navigationController.getState().selectedNodeId,
-        showOverflowIndicator: settings.showOverflowIndicator
+        showOverflowIndicator: settings.showOverflowIndicator,
+        viewportOffset: this.viewportOffset
       });
     } catch (error) {
       this.services.navigationController.setSelectionScene(null);
@@ -188,4 +210,100 @@ export class LocalView extends ItemView {
         return;
     }
   }
+
+  private mountViewportInteractions(viewportEl: HTMLElement): () => void {
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const zoomFactor = Math.exp(-event.deltaY * 0.001);
+      this.distanceScale = clamp(this.distanceScale * zoomFactor, MIN_DISTANCE_SCALE, MAX_DISTANCE_SCALE);
+      this.scheduleRefresh();
+    };
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) {
+        return;
+      }
+
+      this.panState = {
+        pointerId: event.pointerId,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        startOffset: { ...this.viewportOffset },
+        moved: false
+      };
+      viewportEl.setPointerCapture(event.pointerId);
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!this.panState || this.panState.pointerId !== event.pointerId) {
+        return;
+      }
+
+      const deltaX = event.clientX - this.panState.startClientX;
+      const deltaY = event.clientY - this.panState.startClientY;
+      if (!this.panState.moved && Math.hypot(deltaX, deltaY) < PAN_START_THRESHOLD) {
+        return;
+      }
+
+      event.preventDefault();
+      this.panState.moved = true;
+      viewportEl.classList.add("is-panning");
+      this.viewportOffset = {
+        x: this.panState.startOffset.x + deltaX,
+        y: this.panState.startOffset.y + deltaY
+      };
+      this.scheduleRefresh();
+    };
+
+    const endPan = (event: PointerEvent) => {
+      if (!this.panState || this.panState.pointerId !== event.pointerId) {
+        return;
+      }
+
+      if (this.panState.moved) {
+        this.suppressNextClick = true;
+        window.setTimeout(() => {
+          this.suppressNextClick = false;
+        }, 0);
+      }
+
+      if (viewportEl.hasPointerCapture(event.pointerId)) {
+        viewportEl.releasePointerCapture(event.pointerId);
+      }
+      viewportEl.classList.remove("is-panning");
+      this.panState = null;
+    };
+
+    const handleClick = (event: MouseEvent) => {
+      if (!this.suppressNextClick) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      this.suppressNextClick = false;
+    };
+
+    viewportEl.addEventListener("wheel", handleWheel, { passive: false });
+    viewportEl.addEventListener("pointerdown", handlePointerDown);
+    viewportEl.addEventListener("pointermove", handlePointerMove);
+    viewportEl.addEventListener("pointerup", endPan);
+    viewportEl.addEventListener("pointercancel", endPan);
+    viewportEl.addEventListener("click", handleClick, true);
+
+    return () => {
+      viewportEl.removeEventListener("wheel", handleWheel);
+      viewportEl.removeEventListener("pointerdown", handlePointerDown);
+      viewportEl.removeEventListener("pointermove", handlePointerMove);
+      viewportEl.removeEventListener("pointerup", endPan);
+      viewportEl.removeEventListener("pointercancel", endPan);
+      viewportEl.removeEventListener("click", handleClick, true);
+      viewportEl.classList.remove("is-panning");
+      this.panState = null;
+    };
+  }
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }

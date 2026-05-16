@@ -35,9 +35,12 @@ npm run typecheck
 npm test
 npm run build
 npm run install-local
+npm run install-vault -- /path/to/ObsidianVault
 ```
 
 `npm run install-local` пересобирает `main.js` и копирует `main.js`, `manifest.json`, `styles.css` в `.obsidian/plugins/local-view/` для тестирования этого репозитория как vault.
+
+`npm run install-vault -- /path/to/ObsidianVault` пересобирает плагин и копирует только `main.js`, `manifest.json`, `styles.css` в указанный внешний vault для чистого тестирования без документации и исходников.
 
 ## Git Workflow
 

@@ -3,5 +3,7 @@ node_modules/
 coverage/
 *.tsbuildinfo
 dist/
-.obsidian/community-plugins.json
-.obsidian/plugins/local-view/
+.DS_Store
+.obsidian/
+Skyrim/
+Скайрим/

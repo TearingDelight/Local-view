@@ -7,6 +7,7 @@
     "build": "node esbuild.config.mjs production",
     "dev": "node esbuild.config.mjs",
     "install-local": "npm run build && node scripts/install-local.mjs",
+    "install-vault": "npm run build && node scripts/install-vault.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

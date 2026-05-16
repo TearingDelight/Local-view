@@ -36,6 +36,20 @@ npm run install-local
 
 `npm run install-local` rebuilds the plugin and copies those release files into `.obsidian/plugins/local-view` for testing this repository as an Obsidian vault.
 
+To test the clean plugin bundle in another vault, run:
+
+```bash
+npm run install-vault -- /path/to/ObsidianVault
+```
+
+This rebuilds the plugin and copies only the Obsidian release files into `<vault>/.obsidian/plugins/local-view`:
+
+- `main.js`
+- `manifest.json`
+- `styles.css`
+
+Documentation, source files, tests, and plans stay in the GitHub repository but are not installed into the target vault by this command or by GitHub release assets.
+
 For architecture, agent workflow, and publishing notes, see:
 
 - `AGENTS.md`
@@ -45,7 +59,7 @@ For architecture, agent workflow, and publishing notes, see:
 ## Manual Installation
 
 1. Build the plugin.
-2. Copy or symlink this repository into `<vault>/.obsidian/plugins/local-view`.
+2. Copy `main.js`, `manifest.json`, and `styles.css` into `<vault>/.obsidian/plugins/local-view`, or run `npm run install-vault -- /path/to/ObsidianVault`.
 3. Enable community plugins in Obsidian.
 4. Enable `Local View`.
 5. Run `Local view: Open local view`.

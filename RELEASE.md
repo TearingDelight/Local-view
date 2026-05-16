@@ -27,6 +27,20 @@ npm run install-local
 
 Then reload Obsidian or disable/enable the plugin.
 
+## Test In Another Vault
+
+```bash
+npm run install-vault -- /path/to/ObsidianVault
+```
+
+This rebuilds the plugin and installs only the clean runtime bundle:
+
+- `main.js`
+- `manifest.json`
+- `styles.css`
+
+Repository documentation remains available on GitHub, but users should install from release assets, BRAT, or the official Community plugins directory rather than copying the whole source repository into their vault.
+
 ## GitHub Release
 
 1. Update version fields.
@@ -82,4 +96,3 @@ The plugin can be installed by everyone through the official browser only after 
 - Official versions reference: https://docs.obsidian.md/Reference/Versions
 - Community plugin registry: https://github.com/obsidianmd/obsidian-releases
 - Sample plugin release notes: https://github.com/obsidianmd/obsidian-sample-plugin
-

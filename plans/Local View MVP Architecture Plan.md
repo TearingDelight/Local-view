@@ -22,8 +22,9 @@ The MVP must stay small enough to be reliable:
 ```text
 current file
 -> resolved outgoing wikilinks
--> deterministic radial layout
--> click navigation
+-> deterministic local layout
+-> single-click Local View movement
+-> double-click Obsidian file opening
 -> local history back
 -> Obsidian ItemView panel
 ```
@@ -282,10 +283,13 @@ Input adapters emit intent objects:
 ```ts
 type NavigationIntent =
   | { type: "move-to"; nodeId: NodeId }
+  | { type: "enter-node"; nodeId: NodeId }
+  | { type: "open-node"; nodeId: NodeId }
   | { type: "back" }
   | { type: "select-previous" }
   | { type: "select-next" }
-  | { type: "enter-selected" };
+  | { type: "enter-selected" }
+  | { type: "open-selected" };
 ```
 
 Expected files:
@@ -368,11 +372,16 @@ User runs "Local view: Open"
 ### 7.2 Click Navigation
 
 ```text
-User clicks neighbor
-  -> ClickInputAdapter emits { type: "move-to", nodeId }
-  -> NavigationController pushes current node to history
-  -> NavigationController opens target file
+User single-clicks neighbor
+  -> ClickInputAdapter emits { type: "enter-node", nodeId }
+  -> NavigationController pushes current node to local history
+  -> NavigationController changes Local View center without opening the file
   -> LocalView rebuilds around target file
+
+User double-clicks neighbor
+  -> ClickInputAdapter emits { type: "open-node", nodeId }
+  -> NavigationController opens target file in Obsidian
+  -> NavigationController suppresses matching file-open for Local View movement
 ```
 
 ### 7.3 External File Change
@@ -418,7 +427,8 @@ The Local View panel should feel like a compact spatial cockpit:
 - center node is visually dominant;
 - neighbors surround it;
 - links are visible but quiet;
-- click means movement;
+- single-click means Local View movement;
+- double-click means Obsidian file opening;
 - back returns to the previous position;
 - no folders, no global graph, no full vault scan.
 
@@ -444,7 +454,8 @@ The navigation model should be event-driven from the beginning.
 
 MVP user-facing navigation:
 
-- click neighbor -> move to neighbor;
+- single-click neighbor -> move Local View center to neighbor;
+- double-click neighbor -> open neighbor file in Obsidian;
 - command -> go back.
 
 Keyboard navigation:
@@ -651,7 +662,8 @@ Unit tests should cover:
 Manual Obsidian tests:
 
 - open Local View from a normal note;
-- click through 5 linked notes;
+- single-click through 5 linked notes;
+- double-click a linked note and verify the note file opens without moving Local View center;
 - use back command;
 - open unrelated note manually and verify follow mode;
 - test note with no outgoing links;

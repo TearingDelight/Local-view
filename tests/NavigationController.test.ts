@@ -156,6 +156,44 @@ describe("NavigationController", () => {
       pendingInternalOpen: null
     });
   });
+
+  it("can enter or open an explicit node without coupling mouse behavior to Obsidian history", async () => {
+    const alpha = makeFile("Alpha.md");
+    const beta = makeFile("Beta.md");
+    const gamma = makeFile("Gamma.md");
+    const app = makeApp([alpha, beta, gamma]);
+    const opened: TFile[] = [];
+    let controller: NavigationController;
+    controller = new NavigationController({
+      app,
+      getSettings: () => DEFAULT_TEST_SETTINGS,
+      openFile: async (file) => {
+        opened.push(file);
+        await controller.handleFileOpen(file);
+      }
+    });
+
+    await controller.setCurrentFromWorkspace(alpha);
+    controller.enterNode(beta.path);
+
+    expect(opened).toEqual([]);
+    expect(controller.getState()).toEqual({
+      currentNodeId: "Beta.md",
+      selectedNodeId: null,
+      history: [{ nodeId: "Alpha.md", selectedNodeId: "Beta.md" }],
+      pendingInternalOpen: null
+    });
+
+    await controller.openNode(gamma.path);
+
+    expect(opened.map((file) => file.path)).toEqual(["Gamma.md"]);
+    expect(controller.getState()).toEqual({
+      currentNodeId: "Beta.md",
+      selectedNodeId: null,
+      history: [{ nodeId: "Alpha.md", selectedNodeId: "Beta.md" }],
+      pendingInternalOpen: null
+    });
+  });
 });
 
 function makeScene(

@@ -7,7 +7,8 @@ The first version intentionally stays local:
 - current markdown file as the center node;
 - resolved outgoing wikilinks as radial neighbors;
 - deterministic neighbor sorting and layout;
-- click navigation to a neighbor;
+- single-click navigation to a neighbor;
+- double-click opening of a neighbor note;
 - local back history;
 - follow-active-note support;
 - configurable visible neighbor limit and overflow marker.
@@ -83,8 +84,11 @@ Keyboard movement changes Local View's center without opening or focusing the no
 
 ## Viewport Controls
 
+- Single-click a linked note to move Local View to that node.
+- Double-click a linked note to open the note file in Obsidian.
 - Mouse wheel changes the distance scale between nodes.
 - Drag the Local View canvas to pan around the local map.
+- Dragging or long-pressing on a note does not open it; dragging pans the canvas.
 - Node cards keep the same visual size while zooming; only distances and edge lengths change.
 - The selected linked note is drawn above overlapping notes.
 

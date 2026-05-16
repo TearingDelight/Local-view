@@ -14,7 +14,7 @@
 current markdown file
 -> resolved outgoing wikilinks
 -> deterministic local layout
--> click navigation
+-> click/double-click local navigation
 -> local back history
 -> Obsidian ItemView tab
 ```
@@ -86,6 +86,9 @@ Renderer не должен читать Obsidian metadata напрямую и н
 - `W` / `ArrowUp`: переместить центр Local View к выбранной связи, не открывая файл Obsidian.
 - `S` / `ArrowDown`: вернуться по внутренней истории Local View.
 - `Enter` / `Space`: открыть выбранную заметку в Obsidian, не меняя центр Local View.
+- Одиночный клик по соседу: переместить центр Local View к этому узлу, как `W`.
+- Двойной клик по соседу: открыть файл заметки в Obsidian.
+- Drag/долгое перетаскивание по сцене или карточке: pan, без открытия заметки.
 - После возврата через `S` выделение остаётся на заметке, из которой пользователь вернулся.
 - WASD читаются через physical keyboard `event.code`, чтобы работать независимо от раскладки.
 

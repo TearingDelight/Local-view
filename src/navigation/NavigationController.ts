@@ -92,6 +92,14 @@ export class NavigationController {
     await this.openTarget(nodeId, true);
   }
 
+  enterNode(nodeId: NodeId): void {
+    this.moveToLocal(nodeId);
+  }
+
+  async openNode(nodeId: NodeId): Promise<void> {
+    await this.openFileWithoutMovingLocalView(nodeId);
+  }
+
   selectPrevious(): void {
     this.selectByRingStep("previous");
   }

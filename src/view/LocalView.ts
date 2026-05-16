@@ -23,12 +23,14 @@ interface PanState {
   startClientX: number;
   startClientY: number;
   startOffset: ViewportOffset;
+  startTime: number;
   moved: boolean;
 }
 
 const MIN_DISTANCE_SCALE = 0.5;
 const MAX_DISTANCE_SCALE = 8;
 const PAN_START_THRESHOLD = 3;
+const LONG_PRESS_SUPPRESS_CLICK_MS = 350;
 
 export class LocalView extends ItemView {
   private viewportEl: HTMLElement | null = null;
@@ -193,6 +195,12 @@ export class LocalView extends ItemView {
       case "move-to":
         await this.services.navigationController.moveTo(intent.nodeId);
         return;
+      case "enter-node":
+        this.services.navigationController.enterNode(intent.nodeId);
+        return;
+      case "open-node":
+        await this.services.navigationController.openNode(intent.nodeId);
+        return;
       case "back":
         await this.services.navigationController.goBack();
         return;
@@ -229,6 +237,7 @@ export class LocalView extends ItemView {
         startClientX: event.clientX,
         startClientY: event.clientY,
         startOffset: { ...this.viewportOffset },
+        startTime: Date.now(),
         moved: false
       };
       viewportEl.setPointerCapture(event.pointerId);
@@ -260,7 +269,8 @@ export class LocalView extends ItemView {
         return;
       }
 
-      if (this.panState.moved) {
+      const wasLongPress = Date.now() - this.panState.startTime >= LONG_PRESS_SUPPRESS_CLICK_MS;
+      if (this.panState.moved || wasLongPress) {
         this.suppressNextClick = true;
         window.setTimeout(() => {
           this.suppressNextClick = false;

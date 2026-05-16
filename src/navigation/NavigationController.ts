@@ -1,10 +1,13 @@
 import type { App, TFile, WorkspaceLeaf } from "obsidian";
 import { isMarkdownFile, type NodeId } from "../graph/types";
+import type { PositionedNeighborhood } from "../layout/LayoutEngine";
 import type { LocalViewSettings } from "../settings";
-import type { NavigationOrigin } from "./NavigationIntent";
+import { DirectionalNavigationResolver } from "./DirectionalNavigationResolver";
+import type { NavigationDirection, NavigationOrigin } from "./NavigationIntent";
 
 export interface NavigationState {
   currentNodeId: NodeId | null;
+  selectedNodeId: NodeId | null;
   history: NodeId[];
   pendingInternalOpen: NodeId | null;
 }
@@ -21,9 +24,12 @@ export class NavigationController {
   private readonly app: App;
   private readonly getSettings: () => LocalViewSettings;
   private readonly openFile: (file: TFile) => Promise<void>;
+  private readonly directionalResolver = new DirectionalNavigationResolver();
   private readonly listeners = new Set<NavigationChangeListener>();
+  private directionalScene: PositionedNeighborhood | null = null;
   private state: NavigationState = {
     currentNodeId: null,
+    selectedNodeId: null,
     history: [],
     pendingInternalOpen: null
   };
@@ -60,12 +66,56 @@ export class NavigationController {
     return this.state.history.length > 0;
   }
 
+  canOpenSelected(): boolean {
+    return this.state.selectedNodeId !== null;
+  }
+
+  setDirectionalScene(scene: PositionedNeighborhood | null): void {
+    this.directionalScene = scene;
+
+    if (!this.state.selectedNodeId) {
+      return;
+    }
+
+    const selectedStillVisible = scene?.neighbors.some((node) => node.node.id === this.state.selectedNodeId);
+    if (!selectedStillVisible) {
+      this.state.selectedNodeId = null;
+    }
+  }
+
   async moveTo(nodeId: NodeId): Promise<void> {
     if (this.state.currentNodeId === nodeId) {
       return;
     }
 
     await this.openTarget(nodeId, true);
+  }
+
+  selectDirection(direction: NavigationDirection): void {
+    if (!this.directionalScene) {
+      return;
+    }
+
+    const selectedNodeId = this.directionalResolver.resolve(
+      this.directionalScene,
+      direction,
+      this.state.selectedNodeId
+    );
+
+    if (!selectedNodeId || selectedNodeId === this.state.selectedNodeId) {
+      return;
+    }
+
+    this.state.selectedNodeId = selectedNodeId;
+    this.emit("internal");
+  }
+
+  async openSelected(): Promise<void> {
+    if (!this.state.selectedNodeId) {
+      return;
+    }
+
+    await this.moveTo(this.state.selectedNodeId);
   }
 
   async goBack(): Promise<void> {
@@ -78,19 +128,19 @@ export class NavigationController {
   }
 
   async moveLeft(): Promise<void> {
-    return Promise.resolve();
+    this.selectDirection("left");
   }
 
   async moveRight(): Promise<void> {
-    return Promise.resolve();
+    this.selectDirection("right");
   }
 
   async moveUp(): Promise<void> {
-    return Promise.resolve();
+    this.selectDirection("up");
   }
 
   async moveDown(): Promise<void> {
-    return Promise.resolve();
+    this.selectDirection("down");
   }
 
   async setCurrentFromWorkspace(file: TFile): Promise<void> {
@@ -100,6 +150,7 @@ export class NavigationController {
 
     this.state.pendingInternalOpen = null;
     this.state.currentNodeId = file.path;
+    this.state.selectedNodeId = null;
     this.emit("external");
   }
 
@@ -111,6 +162,7 @@ export class NavigationController {
     if (this.state.pendingInternalOpen === file.path) {
       this.state.pendingInternalOpen = null;
       this.state.currentNodeId = file.path;
+      this.state.selectedNodeId = null;
       this.emit("internal");
       return "internal";
     }
@@ -147,6 +199,11 @@ export class NavigationController {
       changed = true;
     }
 
+    if (this.state.selectedNodeId === oldPath) {
+      this.state.selectedNodeId = file.path;
+      changed = true;
+    }
+
     const historyBefore = this.state.history.join("\n");
     this.state.history = this.state.history.map((nodeId) => (nodeId === oldPath ? file.path : nodeId));
     changed = changed || historyBefore !== this.state.history.join("\n");
@@ -167,12 +224,14 @@ export class NavigationController {
       this.state.history.push(previousNodeId);
     }
 
+    this.state.selectedNodeId = null;
     this.state.pendingInternalOpen = targetFile.path;
     await this.openFile(targetFile);
 
     if (this.state.pendingInternalOpen === targetFile.path) {
       this.state.pendingInternalOpen = null;
       this.state.currentNodeId = targetFile.path;
+      this.state.selectedNodeId = null;
       this.emit("internal");
     }
   }
@@ -202,11 +261,16 @@ export class NavigationController {
 
   private removeNodeFromState(nodeId: NodeId): boolean {
     const previousCurrent = this.state.currentNodeId;
+    const previousSelected = this.state.selectedNodeId;
     const previousPending = this.state.pendingInternalOpen;
     const previousHistoryLength = this.state.history.length;
 
     if (this.state.currentNodeId === nodeId) {
       this.state.currentNodeId = null;
+    }
+
+    if (this.state.selectedNodeId === nodeId) {
+      this.state.selectedNodeId = null;
     }
 
     if (this.state.pendingInternalOpen === nodeId) {
@@ -217,6 +281,7 @@ export class NavigationController {
 
     return (
       previousCurrent !== this.state.currentNodeId ||
+      previousSelected !== this.state.selectedNodeId ||
       previousPending !== this.state.pendingInternalOpen ||
       previousHistoryLength !== this.state.history.length
     );
@@ -233,8 +298,8 @@ export class NavigationController {
 function copyState(state: NavigationState): NavigationState {
   return {
     currentNodeId: state.currentNodeId,
+    selectedNodeId: state.selectedNodeId,
     history: [...state.history],
     pendingInternalOpen: state.pendingInternalOpen
   };
 }
-

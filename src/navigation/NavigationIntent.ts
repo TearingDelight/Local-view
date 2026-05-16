@@ -1,12 +1,11 @@
 import type { NodeId } from "../graph/types";
 
+export type NavigationDirection = "up" | "right" | "down" | "left";
+
 export type NavigationIntent =
   | { type: "move-to"; nodeId: NodeId }
   | { type: "back" }
-  | { type: "move-left" }
-  | { type: "move-right" }
-  | { type: "move-up" }
-  | { type: "move-down" };
+  | { type: "select-direction"; direction: NavigationDirection }
+  | { type: "open-selected" };
 
 export type NavigationOrigin = "internal" | "external";
-

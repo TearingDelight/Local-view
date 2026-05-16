@@ -442,21 +442,22 @@ MVP user-facing navigation:
 - click neighbor -> move to neighbor;
 - command -> go back.
 
-Future keyboard navigation:
+Keyboard navigation:
 
-- `A` / Left Arrow -> move to focused or nearest left slot;
-- `D` / Right Arrow -> move to focused or nearest right slot;
-- `W` / Up Arrow -> move to upper slot or semantic up candidate if a relation provider exists;
-- `S` -> go back.
+- `A` / Left Arrow -> select nearest left candidate;
+- `D` / Right Arrow -> select nearest right candidate;
+- `W` / Up Arrow -> select nearest upper candidate;
+- `S` / Down Arrow -> select nearest lower candidate;
+- `Enter` / `Space` -> open selected candidate.
 
 Important decision:
 
 ```text
-S means back.
-S does not mean semantic down in the default mode.
+Keyboard direction first selects a neighbor.
+Opening the selected note is a separate intent.
 ```
 
-This avoids ambiguous movement. A future semantic mode may bind down-navigation separately, but the default spatial control should stay predictable.
+This avoids accidental navigation while keeping WASD spatially consistent.
 
 ### Directional Resolver
 
@@ -750,13 +751,14 @@ Planned v1 features:
 The default keyboard contract:
 
 ```text
-W / ArrowUp     -> spatial up
-A / ArrowLeft   -> spatial left
-D / ArrowRight  -> spatial right
-S               -> back
+W / ArrowUp      -> select spatial up
+A / ArrowLeft    -> select spatial left
+S / ArrowDown    -> select spatial down
+D / ArrowRight   -> select spatial right
+Enter / Space    -> open selected
 ```
 
-Do not bind `S` to semantic down by default.
+Obsidian commands expose the same actions so users can assign custom hotkeys.
 
 ## 19. v2 Direction
 

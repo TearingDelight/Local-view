@@ -1,6 +1,8 @@
 import type { PositionedNeighborhood, PositionedNode } from "../layout/LayoutEngine";
+import type { NodeId } from "../graph/types";
 
 export interface RenderLocalSceneOptions {
+  selectedNodeId: NodeId | null;
   showOverflowIndicator: boolean;
 }
 
@@ -26,10 +28,10 @@ export function renderLocalScene(
 
   const nodeLayer = document.createElement("div");
   nodeLayer.className = "local-view-node-layer";
-  nodeLayer.appendChild(renderNode(scene.center));
+  nodeLayer.appendChild(renderNode(scene.center, options.selectedNodeId));
 
   for (const positionedNode of scene.neighbors) {
-    nodeLayer.appendChild(renderNode(positionedNode));
+    nodeLayer.appendChild(renderNode(positionedNode, options.selectedNodeId));
   }
 
   if (scene.neighbors.length === 0) {
@@ -89,10 +91,12 @@ function renderEdges(edgeLayer: SVGSVGElement, scene: PositionedNeighborhood): v
   }
 }
 
-function renderNode(positionedNode: PositionedNode): HTMLElement {
+function renderNode(positionedNode: PositionedNode, selectedNodeId: NodeId | null): HTMLElement {
   const node = positionedNode.node;
+  const isSelected = !node.isCenter && node.id === selectedNodeId;
   const nodeEl = document.createElement(node.isCenter ? "div" : "button");
   nodeEl.className = node.isCenter ? "local-view-node is-center" : "local-view-node is-neighbor";
+  nodeEl.toggleAttribute("data-local-view-selected", isSelected);
   nodeEl.dataset.localViewSlot = positionedNode.slot;
   nodeEl.style.left = `${positionedNode.x}px`;
   nodeEl.style.top = `${positionedNode.y}px`;
@@ -102,6 +106,7 @@ function renderNode(positionedNode: PositionedNode): HTMLElement {
     const buttonEl = nodeEl as HTMLButtonElement;
     buttonEl.type = "button";
     buttonEl.dataset.localViewNodeId = node.id;
+    buttonEl.setAttribute("aria-pressed", isSelected ? "true" : "false");
   }
 
   const labelEl = document.createElement("span");
@@ -121,4 +126,3 @@ function renderOverflowIndicator(indicator: { count: number; x: number; y: numbe
   overflowEl.title = `${indicator.count} more outgoing links`;
   return overflowEl;
 }
-

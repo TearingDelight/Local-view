@@ -45,6 +45,7 @@ export class LocalView extends ItemView {
   async onOpen(): Promise<void> {
     this.contentEl.replaceChildren();
     this.contentEl.classList.add("local-view-root");
+    this.contentEl.tabIndex = 0;
 
     const toolbarEl = document.createElement("div");
     toolbarEl.className = "local-view-toolbar";
@@ -79,6 +80,7 @@ export class LocalView extends ItemView {
     this.resizeObserver.observe(this.viewportEl);
 
     await this.services.focusActiveFile();
+    this.contentEl.focus({ preventScroll: true });
     await this.refresh();
   }
 
@@ -116,6 +118,7 @@ export class LocalView extends ItemView {
 
     const currentFile = this.services.navigationController.getCurrentFile();
     if (!currentFile) {
+      this.services.navigationController.setDirectionalScene(null);
       renderNoCurrentFile(this.viewportEl);
       return;
     }
@@ -131,13 +134,21 @@ export class LocalView extends ItemView {
         height: this.viewportEl.clientHeight || 420
       });
 
+      this.services.navigationController.setDirectionalScene(scene);
       renderLocalScene(this.viewportEl, scene, {
+        selectedNodeId: this.services.navigationController.getState().selectedNodeId,
         showOverflowIndicator: settings.showOverflowIndicator
       });
     } catch (error) {
+      this.services.navigationController.setDirectionalScene(null);
       const message = error instanceof Error ? error.message : "Unable to render Local View";
       renderError(this.viewportEl, message);
     }
+  }
+
+  hasFocusWithin(): boolean {
+    const activeElement = document.activeElement;
+    return activeElement instanceof Node && this.contentEl.contains(activeElement);
   }
 
   private updateToolbar(): void {
@@ -156,19 +167,12 @@ export class LocalView extends ItemView {
       case "back":
         await this.services.navigationController.goBack();
         return;
-      case "move-left":
-        await this.services.navigationController.moveLeft();
+      case "select-direction":
+        this.services.navigationController.selectDirection(intent.direction);
         return;
-      case "move-right":
-        await this.services.navigationController.moveRight();
-        return;
-      case "move-up":
-        await this.services.navigationController.moveUp();
-        return;
-      case "move-down":
-        await this.services.navigationController.moveDown();
+      case "open-selected":
+        await this.services.navigationController.openSelected();
         return;
     }
   }
 }
-

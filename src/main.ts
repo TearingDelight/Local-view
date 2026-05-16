@@ -4,8 +4,12 @@ import { NeighborhoodBuilder } from "./graph/NeighborhoodBuilder";
 import { ObsidianLinkGraphSource } from "./graph/ObsidianLinkGraphSource";
 import { isMarkdownFile } from "./graph/types";
 import { ClickInputAdapter } from "./input/ClickInputAdapter";
+import { CompositeInputAdapter } from "./input/CompositeInputAdapter";
+import type { InputAdapter } from "./input/InputAdapter";
+import { KeyboardInputAdapter } from "./input/KeyboardInputAdapter";
 import { RadialLayoutEngine } from "./layout/RadialLayoutEngine";
 import { NavigationController } from "./navigation/NavigationController";
+import type { NavigationDirection } from "./navigation/NavigationIntent";
 import {
   DEFAULT_SETTINGS,
   LocalViewSettingTab,
@@ -22,7 +26,7 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
   private graphSource!: ObsidianLinkGraphSource;
   private neighborhoodBuilder!: NeighborhoodBuilder;
   private layoutEngine!: RadialLayoutEngine;
-  private inputAdapter!: ClickInputAdapter;
+  private inputAdapter!: InputAdapter;
   private navigationController!: NavigationController;
   private refreshTimer: number | null = null;
 
@@ -32,7 +36,7 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
     this.graphSource = new ObsidianLinkGraphSource(this.app);
     this.neighborhoodBuilder = new NeighborhoodBuilder(this.graphSource);
     this.layoutEngine = new RadialLayoutEngine();
-    this.inputAdapter = new ClickInputAdapter();
+    this.inputAdapter = new CompositeInputAdapter([new ClickInputAdapter(), new KeyboardInputAdapter()]);
     this.navigationController = new NavigationController({
       app: this.app,
       getSettings: () => this.settings
@@ -85,6 +89,46 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
       name: "Go back",
       callback: () => {
         void this.navigationController.goBack();
+      }
+    });
+
+    this.addCommand({
+      id: "select-up",
+      name: "Select note above",
+      callback: () => {
+        this.selectDirectionFromCommand("up");
+      }
+    });
+
+    this.addCommand({
+      id: "select-right",
+      name: "Select note to the right",
+      callback: () => {
+        this.selectDirectionFromCommand("right");
+      }
+    });
+
+    this.addCommand({
+      id: "select-down",
+      name: "Select note below",
+      callback: () => {
+        this.selectDirectionFromCommand("down");
+      }
+    });
+
+    this.addCommand({
+      id: "select-left",
+      name: "Select note to the left",
+      callback: () => {
+        this.selectDirectionFromCommand("left");
+      }
+    });
+
+    this.addCommand({
+      id: "open-selected-note",
+      name: "Open selected note",
+      callback: () => {
+        void this.openSelectedFromCommand();
       }
     });
 
@@ -232,6 +276,28 @@ export default class LocalViewPlugin extends Plugin implements LocalViewSettings
     this.neighborhoodBuilder.invalidateAll();
     this.navigationController.handleRenamedFile(file, oldPath);
     this.scheduleRefreshViews();
+  }
+
+  private selectDirectionFromCommand(direction: NavigationDirection): void {
+    if (!this.hasFocusedLocalView()) {
+      return;
+    }
+
+    this.navigationController.selectDirection(direction);
+  }
+
+  private async openSelectedFromCommand(): Promise<void> {
+    if (!this.hasFocusedLocalView()) {
+      return;
+    }
+
+    await this.navigationController.openSelected();
+  }
+
+  private hasFocusedLocalView(): boolean {
+    return this.app.workspace
+      .getLeavesOfType(LOCAL_VIEW_TYPE)
+      .some((leaf) => leaf.view instanceof LocalView && leaf.view.hasFocusWithin());
   }
 
   private scheduleRefreshViews(): void {

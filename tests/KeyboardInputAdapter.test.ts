@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getKeyboardNavigationIntent } from "../src/input/KeyboardInputAdapter";
+import { getKeyboardNavigationIntent, getKeyboardSelectionRepeat } from "../src/input/KeyboardInputAdapter";
 
 describe("getKeyboardNavigationIntent", () => {
   it("maps physical WASD keys to ring selection, enter and back", () => {
@@ -24,6 +24,39 @@ describe("getKeyboardNavigationIntent", () => {
   it("ignores modified keys", () => {
     expect(getKeyboardNavigationIntent({ ...baseEvent({ code: "KeyW", key: "ц" }), metaKey: true })).toBeNull();
     expect(getKeyboardNavigationIntent({ ...baseEvent({ key: "ArrowDown" }), shiftKey: true })).toBeNull();
+  });
+});
+
+describe("getKeyboardSelectionRepeat", () => {
+  it("uses a dedicated repeat path for horizontal selection keys", () => {
+    expect(getKeyboardSelectionRepeat(baseEvent({ code: "KeyA", key: "ф" }))).toEqual({
+      keyId: "KeyA",
+      intent: { type: "select-previous" }
+    });
+    expect(getKeyboardSelectionRepeat(baseEvent({ code: "KeyD", key: "в" }))).toEqual({
+      keyId: "KeyD",
+      intent: { type: "select-next" }
+    });
+    expect(getKeyboardSelectionRepeat(baseEvent({ key: "ArrowLeft" }))).toEqual({
+      keyId: "ArrowLeft",
+      intent: { type: "select-previous" }
+    });
+    expect(getKeyboardSelectionRepeat(baseEvent({ key: "ArrowRight" }))).toEqual({
+      keyId: "ArrowRight",
+      intent: { type: "select-next" }
+    });
+  });
+
+  it("does not repeat movement or file-opening keys", () => {
+    expect(getKeyboardSelectionRepeat(baseEvent({ code: "KeyW", key: "ц" }))).toBeNull();
+    expect(getKeyboardSelectionRepeat(baseEvent({ code: "KeyS", key: "ы" }))).toBeNull();
+    expect(getKeyboardSelectionRepeat(baseEvent({ key: "Enter" }))).toBeNull();
+    expect(getKeyboardSelectionRepeat(baseEvent({ key: " " }))).toBeNull();
+  });
+
+  it("ignores modified repeat keys", () => {
+    expect(getKeyboardSelectionRepeat({ ...baseEvent({ code: "KeyA", key: "ф" }), metaKey: true })).toBeNull();
+    expect(getKeyboardSelectionRepeat({ ...baseEvent({ key: "ArrowRight" }), shiftKey: true })).toBeNull();
   });
 });
 

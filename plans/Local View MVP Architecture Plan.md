@@ -475,6 +475,8 @@ Keyboard navigation:
 - `S` / Down Arrow -> go back through Local View history and keep the previous center selected;
 - `Enter` / `Space` -> open the selected note in Obsidian without moving Local View's center.
 
+Held `A` / `D` and Left / Right Arrow use plugin-owned repeat timing for fast, smooth ring selection instead of relying on the browser or OS key-repeat cadence.
+
 Important decision:
 
 ```text
@@ -674,6 +676,7 @@ Manual Obsidian tests:
 - open Local View from a normal note;
 - single-click or single-tap through 5 linked notes;
 - double-click or double-tap a linked note and verify the note file opens without moving Local View center;
+- hold A/D or Left/Right and verify selection repeats quickly and smoothly without moving the center;
 - pinch in and out on mobile and verify node cards keep the same visual size while distances change;
 - use back command;
 - open unrelated note manually and verify follow mode;
@@ -791,6 +794,8 @@ S / ArrowDown    -> go back in Local View history
 D / ArrowRight   -> select next visible link
 Enter / Space    -> open selected note in Obsidian
 ```
+
+Holding A/D or Left/Right repeats only horizontal selection. W/S, Up/Down, Enter, and Space remain explicit movement/opening actions rather than continuous repeat controls.
 
 Obsidian commands expose the same actions so users can assign custom hotkeys.
 

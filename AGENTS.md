@@ -86,6 +86,7 @@ Renderer не должен читать Obsidian metadata напрямую и н
 
 - `A` / `ArrowLeft`: выбрать предыдущую видимую связь.
 - `D` / `ArrowRight`: выбрать следующую видимую связь.
+- Удержание `A` / `D` и `ArrowLeft` / `ArrowRight`: быстро и равномерно повторять выбор через внутренний repeat плагина, не полагаясь на системный key-repeat.
 - `W` / `ArrowUp`: переместить центр Local View к выбранной связи, не открывая файл Obsidian.
 - `S` / `ArrowDown`: вернуться по внутренней истории Local View.
 - `Enter` / `Space`: открыть выбранную заметку в Obsidian, не меняя центр Local View.

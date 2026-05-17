@@ -47,6 +47,7 @@ const PAN_START_THRESHOLD = 3;
 const PINCH_START_THRESHOLD = 4;
 const PINCH_CLICK_SUPPRESS_MS = 350;
 const LONG_PRESS_SUPPRESS_CLICK_MS = 350;
+const REFRESH_THROTTLE_MS = 16;
 
 export class LocalView extends ItemView {
   private viewportEl: HTMLElement | null = null;
@@ -138,13 +139,13 @@ export class LocalView extends ItemView {
 
   scheduleRefresh(): void {
     if (this.refreshTimer !== null) {
-      window.clearTimeout(this.refreshTimer);
+      return;
     }
 
     this.refreshTimer = window.setTimeout(() => {
       this.refreshTimer = null;
       void this.refresh();
-    }, 50);
+    }, REFRESH_THROTTLE_MS);
   }
 
   async refresh(): Promise<void> {

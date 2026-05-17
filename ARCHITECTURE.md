@@ -132,6 +132,8 @@ Keyboard controls are intentionally split between Local View movement and Obsidi
 - `S` / `ArrowDown` emits `back` and returns through Local View's own history.
 - `Enter` / `Space` emits `open-selected` and opens the selected file in Obsidian without changing Local View's center.
 
+`KeyboardInputAdapter` owns a custom repeat loop for `A` / `D` and Left / Right Arrow. It emits the first selection intent immediately, then repeats at a fixed short interval while the key is held, ignoring native browser key-repeat for those selection keys. This keeps ring selection fast and even across desktop platforms. Other navigation keys remain one-intent-per-keydown.
+
 `NavigationController` owns this behavior. Its history entries store both the previous center node and the neighbor that should remain selected after returning. This is what keeps `S` continuous: after entering `Gamma` from `Alpha`, going back to `Alpha` keeps `Gamma` selected.
 
 `open-selected` suppresses the next matching Obsidian `file-open` event so `followActiveNote` does not accidentally turn a file open into a Local View movement.
@@ -170,6 +172,8 @@ Local View has a view-only transform owned by `LocalView`:
 - `viewportOffset` is passed to `renderLocalScene`, so the rendered scene pans without changing graph state.
 
 Do not use CSS `transform: scale(...)` on the scene for zooming. Node cards must keep their rendered size; zoom changes only distances and edge lengths. The selected neighbor uses a higher z-index than other neighbors, and the hovered neighbor uses the highest z-index so it reads like a card pulled from a stack.
+
+`LocalView.scheduleRefresh()` throttles refreshes instead of debouncing them. Continuous input such as held A/D selection should keep repainting at a steady cadence instead of postponing updates until the input stream stops.
 
 ## Agent Notes
 

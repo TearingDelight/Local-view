@@ -97,7 +97,7 @@ When focus is inside Local View:
 - `S` / `ArrowDown` goes back through Local View's own history and keeps the note you came from selected;
 - `Enter` / `Space` opens the selected note in Obsidian without moving Local View's center.
 
-Keyboard movement changes Local View's center without opening or focusing the note editor. The physical `WASD` key positions are used, so the default controls keep working across keyboard layouts. The same actions are also available as Obsidian commands, so users can assign their own hotkeys.
+Holding `A` / `D` or Left / Right Arrow repeats selection quickly and evenly around the visible links. Keyboard movement changes Local View's center without opening or focusing the note editor. The physical `WASD` key positions are used, so the default controls keep working across keyboard layouts. The same actions are also available as Obsidian commands, so users can assign their own hotkeys.
 
 ## Viewport Controls
 

@@ -1,5 +1,8 @@
 # Local View
 
+> [!NOTE]
+> **Demo:** [Local view Shocase.mov](Local%20view%20Shocase.mov)
+
 Local View is a compact spatial navigation panel for Obsidian. It answers one MVP question: where am I, and what can I move to next?
 
 The first version intentionally stays local:

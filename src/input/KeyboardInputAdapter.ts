@@ -19,8 +19,8 @@ interface ActiveSelectionRepeat {
   intervalTimer: number | null;
 }
 
-const SELECTION_REPEAT_INITIAL_DELAY_MS = 140;
-const SELECTION_REPEAT_INTERVAL_MS = 36;
+const SELECTION_REPEAT_INITIAL_DELAY_MS = 210;
+const SELECTION_REPEAT_INTERVAL_MS = 54;
 
 export class KeyboardInputAdapter implements InputAdapter {
   mount(containerEl: HTMLElement, emit: NavigationIntentEmitter): () => void {

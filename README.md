@@ -1,6 +1,6 @@
 # Local View
 
-![Local view Showcase](Local%20view%20Shocase.gif)
+[Local view Showcase (MOV)](Local%20view%20Shocase.mov)
 
 Local View is a compact spatial navigation panel for Obsidian. It answers one MVP question: where am I, and what can I move to next?
 
@@ -50,13 +50,11 @@ This rebuilds the plugin and copies only the Obsidian release files into `<vault
 - `manifest.json`
 - `styles.css`
 
-Documentation, source files, tests, and plans stay in the GitHub repository but are not installed into the target vault by this command or by GitHub release assets.
+Documentation, source files, and tests stay in the GitHub repository but are not installed into the target vault by this command or by GitHub release assets.
 
-For architecture, agent workflow, and publishing notes, see:
+For architecture notes, see:
 
-- `AGENTS.md`
 - `ARCHITECTURE.md`
-- `RELEASE.md`
 
 ## Manual Installation
 

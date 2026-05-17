@@ -179,9 +179,7 @@ Do not use CSS `transform: scale(...)` on the scene for zooming. Node cards must
 
 When changing Local View behavior, update all three documentation layers when relevant:
 
-- `AGENTS.md` for rules future AI agents must follow.
 - `ARCHITECTURE.md` for implemented system behavior and module contracts.
-- `plans/Local View MVP Architecture Plan.md` for product/architecture intent and future direction.
 
 Keep renderer responsibilities narrow: render state and emit intents only. Navigation semantics belong in `NavigationController`; selection order belongs in `RingSelectionResolver`; node positions belong in `RadialLayoutEngine`.
 
